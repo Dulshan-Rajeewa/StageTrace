@@ -1,16 +1,16 @@
--- Creates Supabase-compatible tables for StageTrace snapshots and incident tracking
-
-create table if not exists snapshots (
-    id uuid primary key,
-    environment text not null check (environment in ('staging', 'production')),
-    config jsonb not null,
-    captured_at timestamptz not null default now()
+CREATE TABLE IF NOT EXISTS snapshots (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    environment TEXT NOT NULL CHECK (environment IN ('staging', 'production')),
+    version_tag TEXT,
+    timestamp TIMESTAMPTZ DEFAULT NOW(),
+    payload_url TEXT,
+    metadata JSONB
 );
 
-create table if not exists incidents (
-    id uuid primary key,
-    snapshot_id uuid not null references snapshots(id) on delete cascade,
-    deltas jsonb not null,
-    severity text not null check (severity in ('high', 'medium', 'low')),
-    created_at timestamptz not null default now()
+CREATE TABLE IF NOT EXISTS incidents (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    triggered_at TIMESTAMPTZ DEFAULT NOW(),
+    staging_snapshot_id UUID REFERENCES snapshots(id),
+    production_snapshot_id UUID REFERENCES snapshots(id),
+    status TEXT DEFAULT 'pending'
 );

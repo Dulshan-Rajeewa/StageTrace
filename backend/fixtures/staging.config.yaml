@@ -1,0 +1,12 @@
+feature_flags:
+  email_rate_limit_enabled: false
+  new_onboarding_flow: true
+
+services:
+  email:
+    provider: sendgrid
+    timeout_ms: 3000
+
+dependencies:
+  python: "3.11"
+  fastapi: "0.136.1"
