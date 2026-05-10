@@ -38,14 +38,14 @@ def trigger_incident(payload: TriggerPayload):
     
     # Download configs from Storage
     staging_config = _fetch_config(
-        staging_row.data["payload_url"],
+        staging_row.data["payload_url"], # type: ignore
         payload.staging_snapshot_id,
         "staging"
     )
     production_config = _fetch_config(
-        production_row.data["payload_url"],
+        production_row.data["payload_url"], # type: ignore
         payload.production_snapshot_id,
-        "staging"
+        "production"
     )
     
     # Diff
