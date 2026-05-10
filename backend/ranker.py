@@ -4,12 +4,12 @@ import json
 from dataclasses import dataclass
 from typing import List
 
-import anthropic
+from mistralai.client import Mistral
 
-from app.config import ANTHROPIC_API_KEY
+from app.config import MISTRAL_API_KEY
 from diff_engine import Delta
 
-client = anthropic.Anthropic(api_key=ANTHROPIC_API_KEY)
+client = Mistral(api_key=MISTRAL_API_KEY)
 
 SYSTEM_PROMPT = """
 You are a senior DevOps engineer performing forensic root cause analysis.
@@ -68,17 +68,19 @@ def rank_deltas(deltas: List[Delta]) -> ForensicReport:
     ]
     
     try:
-        response = client.messages.create(
-            model="claude-sonnet-4-6",
+        response = client.chat.complete(
+            model="mistral-small-latest",
             max_tokens=1024,
-            system=SYSTEM_PROMPT,
-            messages=[{
-                "role": "user",
-                "content": f"Analyse these configuration deltas and identify the root cause:\n\n{json.dumps(deltas_payload, indent=2)}"
-            }]
+            messages=[
+                {"role": "system", "content": SYSTEM_PROMPT},
+                {
+                    "role": "user",
+                    "content": f"Analyse these configuration deltas and identify the root cause:\n\n{json.dumps(deltas_payload, indent=2)}",
+                },
+            ],
         )
         
-        raw = response.content[0].text.strip()
+        raw = response.choices[0].message.content.strip() # type: ignore
         data = json.loads(raw)
 
         return ForensicReport(
