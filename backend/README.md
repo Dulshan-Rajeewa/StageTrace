@@ -1,63 +1,67 @@
-# StageTrace Diff Engine
+# StageTrace Backend
 
-This backend module provides a standalone diff engine for StageTrace configuration drift analysis.
+FastAPI backend for StageTrace. It stores snapshots in Supabase Storage, computes drift, ranks likely root cause, and serves dashboard/incident/history APIs used by the frontend.
 
-## What it does
+## Environment variables
 
-`diff_engine.py` compares a staging config snapshot against a production config snapshot and returns a list of `Delta` objects representing added, removed, and modified keys.
+Configure these in `backend/.env`:
 
-The diff engine uses `DeepDiff` to detect changes and automatically classifies each diff by:
+- `SUPABASE_URL`
+- `SUPABASE_KEY` (service role key)
+- `MISTRAL_API_KEY`
+- `SUPABASE_BUCKET` (default `snapshots`)
+- `FRONTEND_ORIGINS` (comma-separated, for example `http://localhost:5173`)
+- `STAGETRACE_API_URL` (used by `agent.py`)
 
-- `category`: env_var, feature_flag, dependency, schema
-- `severity_hint`: high, medium, low
+## Database setup
 
-## Installation
+Run both SQL migrations in Supabase SQL editor:
 
-Install the required dependency:
+1. `backend/migrations/001_create_tables.sql`
+2. `backend/migrations/002_add_incident_payload_columns.sql`
+
+Create a storage bucket named `snapshots` (or match `SUPABASE_BUCKET`).
+
+## Run backend
+
+From `backend`:
 
 ```bash
-pip install deepdiff
+uv sync
+uv run uvicorn app.main:app --reload --port 8000
 ```
 
-## Usage
+Health check:
 
-```python
-from backend.diff_engine import compute_diff
-
-staging = {
-    "API_KEY": "staging-secret",
-    "FEATURE_FLAG_NEW_UI": False,
-    "database": {
-        "host": "staging.db.example.com",
-        "port": 5432,
-    },
-}
-
-production = {
-    "API_KEY": "production-secret",
-    "FEATURE_FLAG_NEW_UI": True,
-    "database": {
-        "host": "production.db.example.com",
-        "port": 5432,
-    },
-}
-
-deltas = compute_diff(staging, production)
-for delta in deltas:
-    print(delta)
+```bash
+curl http://localhost:8000/health
 ```
 
-## Delta fields
+## API overview
 
-- `key`: config key path, including nested keys (for example `database.host`)
-- `staging_value`: the value from the staging snapshot or `None` if absent
-- `production_value`: the value from the production snapshot or `None` if absent
-- `category`: one of `env_var`, `feature_flag`, `dependency`, `schema`
-- `severity_hint`: one of `high`, `medium`, `low`
+- `GET /health`
+- `POST /snapshots/`
+- `GET /snapshots/`
+- `POST /incidents/trigger`
+- `GET /incidents/`
+- `GET /incidents/history`
+- `GET /incidents/{incident_id}/report`
+- `GET /dashboard/summary`
 
-## Running tests
+## Generate snapshots and trigger incident
 
-From the repository root:
+From `backend`:
+
+```bash
+uv run python agent.py --env staging --env-file fixtures/staging.env --config-file fixtures/staging.config.yaml --version-tag v1
+uv run python agent.py --env production --env-file fixtures/production.env --config-file fixtures/production.config.yaml --version-tag v1
+```
+
+Then call `POST /incidents/trigger` with the two snapshot ids.
+
+## Tests
+
+From repository root:
 
 ```bash
 pytest backend/tests/test_diff_engine.py
