@@ -1,103 +1,12 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import { Search, ChevronDown, ArrowRightLeft, History } from 'lucide-react';
+import { getDriftHistory } from '../services/api';
+import type { DriftHistoryRow } from '../types';
 
 type ChangeType = 'Modified' | 'Added' | 'Missing';
 
-interface DriftSnapshotRow {
-  id: string;
-  timestamp: string;
-  environmentPair: string;
-  configKey: string;
-  stagingValue: string;
-  productionValue: string;
-  changeType: ChangeType;
-}
-
 type TimeRangeOption = 'Last 7 Days' | 'Last 30 Days' | 'Last 90 Days';
-
-const driftSnapshots: DriftSnapshotRow[] = [
-  {
-    id: 'drift-9012',
-    timestamp: '2026-05-05T09:46:00Z',
-    environmentPair: 'api-staging / api-prod',
-    configKey: 'FEATURE_X_ROLLOUT_PERCENT',
-    stagingValue: '10',
-    productionValue: '25',
-    changeType: 'Modified',
-  },
-  {
-    id: 'drift-9011',
-    timestamp: '2026-05-05T08:22:00Z',
-    environmentPair: 'web-staging / web-prod',
-    configKey: 'NEXT_PUBLIC_SENTRY_SAMPLE_RATE',
-    stagingValue: '0.05',
-    productionValue: '0.20',
-    changeType: 'Modified',
-  },
-  {
-    id: 'drift-9008',
-    timestamp: '2026-05-04T19:07:00Z',
-    environmentPair: 'billing-staging / billing-prod',
-    configKey: 'STRIPE_RETRY_LIMIT',
-    stagingValue: '(missing)',
-    productionValue: '5',
-    changeType: 'Added',
-  },
-  {
-    id: 'drift-9002',
-    timestamp: '2026-05-03T14:51:00Z',
-    environmentPair: 'api-staging / api-prod',
-    configKey: 'JWT_REFRESH_TOKEN_TTL_MINUTES',
-    stagingValue: '45',
-    productionValue: '(missing)',
-    changeType: 'Missing',
-  },
-  {
-    id: 'drift-8996',
-    timestamp: '2026-05-02T11:13:00Z',
-    environmentPair: 'worker-staging / worker-prod',
-    configKey: 'QUEUE_VISIBILITY_TIMEOUT_SEC',
-    stagingValue: '180',
-    productionValue: '240',
-    changeType: 'Modified',
-  },
-  {
-    id: 'drift-8988',
-    timestamp: '2026-04-29T22:02:00Z',
-    environmentPair: 'api-staging / api-prod',
-    configKey: 'REDIS_TLS_ENABLED',
-    stagingValue: 'false',
-    productionValue: 'true',
-    changeType: 'Modified',
-  },
-  {
-    id: 'drift-8973',
-    timestamp: '2026-04-23T06:35:00Z',
-    environmentPair: 'web-staging / web-prod',
-    configKey: 'NEXT_PUBLIC_MAINTENANCE_BANNER',
-    stagingValue: 'enabled',
-    productionValue: '(missing)',
-    changeType: 'Missing',
-  },
-  {
-    id: 'drift-8961',
-    timestamp: '2026-04-15T16:28:00Z',
-    environmentPair: 'billing-staging / billing-prod',
-    configKey: 'LEDGER_RECON_WINDOW_HOURS',
-    stagingValue: '(missing)',
-    productionValue: '24',
-    changeType: 'Added',
-  },
-  {
-    id: 'drift-8949',
-    timestamp: '2026-03-17T12:19:00Z',
-    environmentPair: 'worker-staging / worker-prod',
-    configKey: 'BATCH_WRITE_SIZE',
-    stagingValue: '200',
-    productionValue: '300',
-    changeType: 'Modified',
-  },
-];
 
 const formatTimestamp = (iso: string) => {
   const date = new Date(iso);
@@ -112,7 +21,7 @@ const formatTimestamp = (iso: string) => {
 };
 
 const isInSelectedRange = (dateISO: string, range: TimeRangeOption) => {
-  const now = new Date('2026-05-05T23:59:59Z');
+  const now = new Date();
   const snapshotDate = new Date(dateISO);
   const diffMs = now.getTime() - snapshotDate.getTime();
   const diffDays = diffMs / (1000 * 60 * 60 * 24);
@@ -142,20 +51,42 @@ const getChangeBadge = (changeType: ChangeType) => {
 };
 
 export const DriftHistory = () => {
+  const [rows, setRows] = useState<DriftHistoryRow[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedPair, setSelectedPair] = useState('All Environment Pairs');
   const [selectedRange, setSelectedRange] =
     useState<TimeRangeOption>('Last 30 Days');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const result = await getDriftHistory(100, 0, 'all', '');
+        setRows(result.history);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load drift history';
+        setError(errorMessage);
+        toast.error('Failed to load history', {
+          description: errorMessage,
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void load();
+  }, []);
 
   const environmentPairs = useMemo(() => {
-    const pairs = Array.from(new Set(driftSnapshots.map((entry) => entry.environmentPair)));
+    const pairs = Array.from(new Set(rows.map((entry) => entry.environmentPair)));
     return ['All Environment Pairs', ...pairs];
-  }, []);
+  }, [rows]);
 
   const filteredRows = useMemo(() => {
     const normalizedSearch = searchTerm.trim().toLowerCase();
 
-    return driftSnapshots.filter((entry) => {
+    return rows.filter((entry) => {
       const matchesSearch =
         normalizedSearch.length === 0 ||
         entry.configKey.toLowerCase().includes(normalizedSearch) ||
@@ -171,7 +102,7 @@ export const DriftHistory = () => {
 
       return matchesSearch && matchesPair && matchesRange;
     });
-  }, [searchTerm, selectedPair, selectedRange]);
+  }, [rows, searchTerm, selectedPair, selectedRange]);
 
   return (
     <div className="space-y-5">
@@ -181,6 +112,36 @@ export const DriftHistory = () => {
           Continuous environment snapshot log.
         </p>
       </div>
+
+      {error && (
+        <div className="rounded-md border border-rose-300 bg-rose-100 px-4 py-3 text-sm text-rose-800 dark:border-rose-700 dark:bg-rose-500/20 dark:text-rose-200 flex items-center justify-between">
+          <span>{error}</span>
+          <button
+              onClick={() => {
+              setLoading(true);
+              setError(null);
+              const load = async () => {
+                try {
+                  const result = await getDriftHistory(100, 0, 'all', '');
+                  setRows(result.history);
+                } catch (err) {
+                  const errorMessage = err instanceof Error ? err.message : 'Failed to load drift history';
+                  setError(errorMessage);
+                  toast.error('Failed to load history', {
+                    description: errorMessage,
+                  });
+                } finally {
+                  setLoading(false);
+                }
+              };
+              void load();
+            }}
+            className="ml-3 font-semibold hover:underline"
+          >
+            Retry
+          </button>
+        </div>
+      )}
 
       <div className="rounded-md border border-gray-200 bg-white px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900">
         <div className="grid grid-cols-1 gap-3 lg:grid-cols-12">
@@ -253,7 +214,13 @@ export const DriftHistory = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-100 dark:divide-zinc-800">
-              {filteredRows.length === 0 ? (
+              {loading ? (
+                <tr>
+                  <td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-500 dark:text-zinc-400">
+                    Loading drift history...
+                  </td>
+                </tr>
+              ) : filteredRows.length === 0 ? (
                 <tr>
                   <td colSpan={6} className="px-4 py-10 text-center text-sm text-gray-500 dark:text-zinc-400">
                     No drift snapshots match your filters.
@@ -261,7 +228,7 @@ export const DriftHistory = () => {
                 </tr>
               ) : (
                 filteredRows.map((row) => (
-                  <tr key={row.id} className="transition hover:bg-gray-50 dark:hover:bg-zinc-800/60">
+                  <tr key={`${row.incidentId}-${row.configKey}-${row.timestamp}`} className="transition hover:bg-gray-50 dark:hover:bg-zinc-800/60">
                     <td className="whitespace-nowrap px-4 py-3 align-top font-mono text-xs font-medium text-gray-800 dark:text-zinc-200">
                       {formatTimestamp(row.timestamp)}
                     </td>

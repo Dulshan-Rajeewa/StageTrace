@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 import {
   CheckCircle2,
   AlertTriangle,
@@ -7,17 +8,35 @@ import {
   Calendar,
   Zap,
 } from 'lucide-react';
-import { mockParityScores, mockIncidentReports } from '../data/mockData';
-import type { ParityScore, IncidentReport } from '../types';
+import { getDashboardSummary } from '../services/api';
+import type { DashboardIncidentSummary, ParityScore } from '../types';
 
 export const Dashboard = () => {
   const [parityScore, setParityScore] = useState<ParityScore | null>(null);
-  const [incidents, setIncidents] = useState<IncidentReport[]>([]);
+  const [incidents, setIncidents] = useState<DashboardIncidentSummary[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const loadData = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const summary = await getDashboardSummary();
+      setParityScore(summary.parityScore);
+      setIncidents(summary.incidents);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : 'Failed to load dashboard data';
+      setError(errorMessage);
+      toast.error('Failed to load dashboard', {
+        description: errorMessage,
+      });
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Simulate data loading
-    setParityScore(mockParityScores.current);
-    setIncidents(mockIncidentReports);
+    void loadData();
   }, []);
 
   const getStatusColor = (status: string) => {
@@ -80,6 +99,24 @@ export const Dashboard = () => {
           Monitor configuration parity between staging and production
         </p>
       </div>
+
+      {error && (
+        <div className="rounded-md border border-rose-300 bg-rose-100 px-4 py-3 text-sm text-rose-800 dark:border-rose-700 dark:bg-rose-500/20 dark:text-rose-200 flex items-center justify-between">
+          <span>{error}</span>
+          <button
+            onClick={() => void loadData()}
+            className="ml-3 font-semibold hover:underline"
+          >
+            Retry
+          </button>
+        </div>
+      )}
+
+      {loading && (
+        <div className="rounded-md border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+          Loading dashboard data...
+        </div>
+      )}
 
       {/* Parity Score Card */}
       {parityScore && (
@@ -156,7 +193,7 @@ export const Dashboard = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
-              {incidents.length === 0 ? (
+              {!loading && incidents.length === 0 ? (
                 <tr>
                   <td colSpan={5} className="px-4 py-8 text-center text-gray-500 dark:text-zinc-400">
                     No incidents detected. Your environments are in sync!
@@ -188,8 +225,7 @@ export const Dashboard = () => {
                           incident.severity
                         )}`}
                       >
-                        {incident.severity && incident.severity.charAt(0).toUpperCase() +
-                          incident.severity.slice(1) || 'Unknown'}
+                        {incident.severity.charAt(0).toUpperCase() + incident.severity.slice(1)}
                       </span>
                     </td>
 
@@ -197,18 +233,18 @@ export const Dashboard = () => {
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2">
                         <span className="inline-block rounded-md border border-gray-300 bg-gray-100 px-2 py-0.5 font-mono text-xs font-semibold text-gray-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
-                          {incident.diffs.length}
+                          {incident.diffCount}
                         </span>
                         <span className="text-xs text-gray-600 dark:text-zinc-400">
-                          {incident.diffs.length === 1 ? 'change' : 'changes'}
+                          {incident.diffCount === 1 ? 'change' : 'changes'}
                         </span>
                       </div>
                     </td>
 
                     {/* Root Cause (truncated) */}
                     <td className="max-w-xs px-4 py-3 text-gray-600 dark:text-zinc-400">
-                      <p className="truncate" title={incident.rootCauseExplanation}>
-                        {incident.rootCauseExplanation}
+                      <p className="truncate" title={incident.summary}>
+                        {incident.summary}
                       </p>
                     </td>
                   </tr>

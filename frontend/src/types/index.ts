@@ -27,3 +27,26 @@ export interface IncidentReport {
   rootCauseExplanation: string; // AI-generated explanation
   severity?: 'low' | 'medium' | 'high'; // optional severity level
 }
+
+export interface DashboardIncidentSummary {
+  id: string;
+  timestamp: string;
+  severity: 'low' | 'medium' | 'high';
+  summary: string;
+  diffCount: number;
+}
+
+export interface DashboardSummary {
+  parityScore: ParityScore;
+  incidents: DashboardIncidentSummary[];
+}
+
+export interface DriftHistoryRow {
+  incidentId: string;
+  timestamp: string;
+  environmentPair: string;
+  configKey: string;
+  stagingValue: string;
+  productionValue: string;
+  changeType: 'Modified' | 'Added' | 'Missing';
+}

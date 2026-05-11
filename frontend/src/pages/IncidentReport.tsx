@@ -1,4 +1,6 @@
 import { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { toast } from 'sonner';
 import {
   AlertTriangle,
   Plus,
@@ -8,7 +10,7 @@ import {
   Lightbulb,
   Code,
 } from 'lucide-react';
-import { mockIncidentReports } from '../data/mockData';
+import { getIncidentReport, getLatestIncidentReport } from '../services/api';
 import type { IncidentReport, EnvironmentDiff } from '../types';
 
 interface IncidentReportProps {
@@ -136,14 +138,52 @@ const DiffItem = ({ diff }: { diff: EnvironmentDiff }) => {
 };
 
 export const IncidentReportPage = ({ incidentId }: IncidentReportProps) => {
+  const params = useParams();
   const [incident, setIncident] = useState<IncidentReport | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    // Load incident by ID or use the first one as default
-    const foundIncident = mockIncidentReports.find((i) => i.id === incidentId) ||
-      mockIncidentReports[0];
-    setIncident(foundIncident || null);
-  }, [incidentId]);
+    const activeIncidentId = incidentId || params.incidentId;
+
+    const load = async () => {
+      try {
+        if (activeIncidentId) {
+          const report = await getIncidentReport(activeIncidentId);
+          setIncident(report);
+        } else {
+          const latest = await getLatestIncidentReport();
+          setIncident(latest);
+        }
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : 'Failed to load incident report';
+        setError(errorMessage);
+        toast.error('Failed to load incident', {
+          description: errorMessage,
+        });
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    void load();
+  }, [incidentId, params.incidentId]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <p className="text-gray-500 dark:text-zinc-400">Loading incident report...</p>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="flex items-center justify-center h-96">
+        <p className="text-rose-700 dark:text-rose-300">{error}</p>
+      </div>
+    );
+  }
 
   if (!incident) {
     return (
