@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Save,
   X,
@@ -313,7 +313,7 @@ export const Settings = () => {
       </div>
 
       {/* Action Buttons */}
-      <div className="flex items-center gap-3 pb-8">
+      <div className="flex items-center gap-3">
         <button
           onClick={handleSave}
           disabled={!hasChanges}

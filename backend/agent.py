@@ -56,6 +56,24 @@ def post_snapshot(environment: str, version_tag: str | None, config: dict) -> st
     data = response.json()
     return data["id"]
 
+
+def fetch_latest_snapshot(environment: str) -> str | None:
+    response = httpx.get(f"{API_BASE}/snapshots/", timeout=30)
+    response.raise_for_status()
+    snapshots = response.json()
+    matches = [s for s in snapshots if s["environment"] == environment]
+    return matches[0]["id"] if matches else None
+
+
+def trigger_incident(staging_id: str, production_id: str) -> str:
+    payload = {
+        "staging_snapshot_id": staging_id,
+        "production_snapshot_id": production_id,
+    }
+    response = httpx.post(f"{API_BASE}/incidents/trigger", json=payload, timeout=60)
+    response.raise_for_status()
+    return response.json()["incident_id"]
+
     
 def main():
     parser = argparse.ArgumentParser(description="StageTrace Snapshot Agent")
@@ -76,7 +94,22 @@ def main():
     print(f"[Agent] POST {args.env} snapshot to {API_BASE}/snapshots/")
     snapshot_id = post_snapshot(args.env, args.version_tag, snapshot)
 
-    print(f"[Agent] Done.\n Snapshot ID: {snapshot_id}")
+    print(f"[Agent] Done. Snapshot ID: {snapshot_id}")
+
+    opposite_env = "production" if args.env == "staging" else "staging"
+    print(f"[Agent] Checking for existing {opposite_env} snapshot...")
+    opposite_id = fetch_latest_snapshot(opposite_env)
+
+    if not opposite_id:
+        print(f"[Agent] No {opposite_env} snapshot found. Run the agent for {opposite_env} to trigger analysis.")
+        return
+
+    staging_id = snapshot_id if args.env == "staging" else opposite_id
+    production_id = snapshot_id if args.env == "production" else opposite_id
+
+    print(f"[Agent] Both snapshots found. Triggering incident analysis...")
+    incident_id = trigger_incident(staging_id, production_id)
+    print(f"[Agent] Incident created. Incident ID: {incident_id}")
 
 
 if __name__ == "__main__":
