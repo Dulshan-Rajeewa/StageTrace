@@ -5,8 +5,8 @@ Reads environment variables and a config.yaml from the local machine,
 packages them as a snapshot, and POSTs to the StageTrace API.
 
 Usage:
-    uv run python agent.py --env staging --env-file staging.env --config-file staging.config.yaml
-    uv run python agent.py --env production --env-file production.env --config-file production.config.yaml
+    uv run python agent.py --env staging --env-file fixtures/staging.env --config-file fixtures/staging.config.yaml
+    uv run python agent.py --env production --env-file fixtures/production.env --config-file fixtures/production.config.yaml
 """
 
 import argparse
