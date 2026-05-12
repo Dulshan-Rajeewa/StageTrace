@@ -151,7 +151,7 @@ def get_drift_history(
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0),
     environment_pair: str = Query("staging/production", description="Environment pair filter"),
-    time_range: str = Query("all", regex="^(last_7_days|last_30_days|last_90_days|all)$", description="Time range filter"),
+    time_range: str = Query("all", pattern="^(last_7_days|last_30_days|last_90_days|all)$", description="Time range filter"),
     search: str = Query("", description="Config key search filter")
 ):
     # Build time filter

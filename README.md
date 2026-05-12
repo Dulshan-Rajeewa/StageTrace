@@ -7,7 +7,7 @@ StageTrace is a DevOps tool for monitoring configuration drift between staging a
 - **Node.js** 18+ (for frontend)
 - **Python** 3.13+ (for backend)
 - **Supabase** account with a project created
-- **Mistral API** key (for AI-powered root cause analysis)
+- **Gemini API** key (for AI-powered root cause analysis)
 
 ## Architecture Overview
 
@@ -31,7 +31,7 @@ Supabase PostgreSQL + Storage
 ### 1.1 Create Project
 1. Go to [supabase.com](https://supabase.com) and log in
 2. Create a new project
-3. Note down your **Project URL** and **Service Role Key** (keep these secret!)
+3. Note down your **Project URL** and **ANON Key**
 
 ### 1.2 Run Database Migrations
 Execute these SQL migrations in the Supabase SQL Editor:
@@ -49,7 +49,7 @@ Execute these SQL migrations in the Supabase SQL Editor:
 ### 1.3 Create Storage Bucket
 1. Go to Storage in your Supabase project
 2. Create a new bucket named `snapshots`
-3. Set it to private
+3. Set it to public
 
 ## Step 2: Backend Setup
 
@@ -58,19 +58,8 @@ Execute these SQL migrations in the Supabase SQL Editor:
 ```bash
 cd backend
 
-# Create virtual environment
-python -m venv .venv
-
-# Activate virtual environment
-# On Windows:
-.venv\Scripts\activate
-# On macOS/Linux:
-source .venv/bin/activate
-
 # Install dependencies (with uv)
-uv pip install -e .
-# Or with pip:
-pip install -e .
+uv sync
 ```
 
 ### 2.2 Configure Environment Variables
@@ -80,11 +69,11 @@ Create `backend/.env` file:
 ```bash
 # Supabase
 SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your-service-role-key
+SUPABASE_KEY=your-anon-key
 SUPABASE_BUCKET=snapshots
 
-# Mistral AI
-MISTRAL_API_KEY=your-mistral-api-key
+# Gemini AI
+GEMINI_API_KEY=your-gemini-api-key
 
 # Frontend CORS (allow localhost:5173)
 FRONTEND_ORIGINS=http://localhost:5173,http://localhost:3000
@@ -93,7 +82,7 @@ FRONTEND_ORIGINS=http://localhost:5173,http://localhost:3000
 ENVIRONMENT=development
 ```
 
-**⚠️ Important:** Add `.env` to `.gitignore` - never commit secrets!
+**⚠️ Important:** Add `.env` to `.gitignore`
 
 ### 2.3 Run Backend Server
 
@@ -240,7 +229,7 @@ StageTrace/
 - ✅ FastAPI with CORS for localhost
 - ✅ Supabase integration (PostgreSQL + Storage)
 - ✅ Configuration diffing engine
-- ✅ AI-powered root cause analysis (Mistral)
+- ✅ AI-powered root cause analysis (Gemini)
 - ✅ Incident persistence with metadata
 - ✅ Pagination and filtering on all list endpoints
 
@@ -335,15 +324,14 @@ For issues or questions:
 **Terminal 1 - Backend:**
 ```bash
 cd backend
-.venv\Scripts\activate  # Windows
-# or: source .venv/bin/activate  # macOS/Linux
+uv sync
 uvicorn app.main:app --reload --port 8000
 ```
 
 **Terminal 2 - Frontend:**
 ```bash
 cd frontend
-npm install  # if you haven't yet (to get sonner)
+npm install
 npm run dev
 ```
 
@@ -378,27 +366,6 @@ GET /incidents/history?limit=50&offset=0&time_range=all&search= → {
   filters: { time_range, environment_pair, search }
 }
 ```
-
----
-
-## Files Modified
-
-### Backend
-- `app/routers/incidents.py` - Added pagination & filters (imports: timedelta, Query)
-- `pyproject.toml` - No changes needed (all deps already present)
-
-### Frontend
-- `package.json` - Added sonner dependency
-- `src/services/api.ts` - Updated response types & API calls
-- `src/pages/Dashboard.tsx` - Added toast + retry UI
-- `src/pages/IncidentReport.tsx` - Added toast notifications
-- `src/pages/DriftHistory.tsx` - Added toast + retry UI
-- `src/App.tsx` - Added Toaster component
-
-### New Files
-- `backend/test_e2e.py` - End-to-end test automation
-- `SETUP.md` - Complete setup & run guide
-
 ---
 
 ## Testing the Features
