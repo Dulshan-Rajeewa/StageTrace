@@ -105,7 +105,7 @@ export const DriftHistory = () => {
   }, [selectedRange, searchTerm]);
 
   return (
-    <div className="space-y-5">
+    <div className="flex h-full flex-col space-y-5">
       <div>
         <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-zinc-100">
           Drift History
@@ -174,10 +174,10 @@ export const DriftHistory = () => {
         </div>
       </div>
 
-      <div className="overflow-hidden rounded-md border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="flex-1 overflow-hidden rounded-md border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
         <div className="max-h-[580px] overflow-auto">
           <table className="min-w-full table-fixed text-left text-sm text-gray-700 dark:text-zinc-300">
-            <thead className="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 dark:border-zinc-800 dark:bg-zinc-950/80">
+            <thead className="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 dark:border-zinc-800 dark:bg-zinc-950">
               <tr>
                 <th className="w-[17%] px-4 py-2 text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-zinc-400">
                   Timestamp
@@ -224,10 +224,10 @@ export const DriftHistory = () => {
                     key={`${row.incidentId}-${row.configKey}-${row.timestamp}`}
                     className="transition hover:bg-gray-50 dark:hover:bg-zinc-800/60"
                   >
-                    <td className="whitespace-nowrap px-4 py-3 align-top font-mono text-xs font-medium text-gray-800 dark:text-zinc-200">
+                    <td className="whitespace-nowrap px-4 py-3 align-center font-mono text-xs font-medium text-gray-800 dark:text-zinc-200">
                       {formatTimestamp(row.timestamp)}
                     </td>
-                    <td className="px-4 py-3 align-top">
+                    <td className="px-4 py-3 align-center">
                       <p
                         className="truncate font-mono text-xs text-gray-900 dark:text-zinc-100"
                         title={row.configKey}
@@ -235,7 +235,7 @@ export const DriftHistory = () => {
                         {row.configKey}
                       </p>
                     </td>
-                    <td className="px-4 py-3 align-top">
+                    <td className="px-4 py-3 align-center">
                       <span
                         className="inline-block w-full truncate rounded-md border border-rose-200 bg-rose-50 px-2.5 py-1.5 font-mono text-xs text-rose-800 dark:border-rose-900/50 dark:bg-rose-950/20 dark:text-rose-200"
                         title={row.stagingValue}
@@ -243,7 +243,7 @@ export const DriftHistory = () => {
                         {row.stagingValue}
                       </span>
                     </td>
-                    <td className="px-4 py-3 align-top">
+                    <td className="px-4 py-3 align-center">
                       <span
                         className="inline-block w-full truncate rounded-md border border-emerald-200 bg-emerald-50 px-2.5 py-1.5 font-mono text-xs text-emerald-800 dark:border-emerald-900/50 dark:bg-emerald-950/20 dark:text-emerald-200"
                         title={row.productionValue}
@@ -251,7 +251,7 @@ export const DriftHistory = () => {
                         {row.productionValue}
                       </span>
                     </td>
-                    <td className="px-4 py-3 align-top">
+                    <td className="px-4 py-3 align-center">
                       <span
                         className={`inline-flex rounded-md border px-2 py-0.5 text-[11px] font-semibold ${getChangeBadge(
                           row.changeType,
@@ -260,7 +260,7 @@ export const DriftHistory = () => {
                         {row.changeType}
                       </span>
                     </td>
-                    <td className="px-4 py-3 align-top font-mono text-[11px] text-gray-500 dark:text-zinc-500">
+                    <td className="px-4 py-3 align-center font-mono text-[11px] text-gray-500 dark:text-zinc-500">
                       {row.environmentPair}
                     </td>
                   </tr>

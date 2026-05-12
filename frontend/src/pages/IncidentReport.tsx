@@ -1,17 +1,17 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
-import { toast } from 'sonner';
 import {
   AlertTriangle,
-  Plus,
-  Minus,
-  Edit2,
   Calendar,
-  Lightbulb,
   Code,
-} from 'lucide-react';
-import { getIncidentReport, getLatestIncidentReport } from '../services/api';
-import type { IncidentReport, EnvironmentDiff } from '../types';
+  Edit2,
+  Lightbulb,
+  Minus,
+  Plus,
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { useParams } from "react-router-dom";
+import { toast } from "sonner";
+import { getIncidentReport, getLatestIncidentReport } from "../services/api";
+import type { EnvironmentDiff, IncidentReport } from "../types";
 
 interface IncidentReportProps {
   incidentId?: string;
@@ -20,11 +20,11 @@ interface IncidentReportProps {
 const DiffItem = ({ diff }: { diff: EnvironmentDiff }) => {
   const getChangeTypeIcon = (changeType: string) => {
     switch (changeType) {
-      case 'added':
+      case "added":
         return <Plus className="w-5 h-5 text-green-600" />;
-      case 'removed':
+      case "removed":
         return <Minus className="w-5 h-5 text-red-600" />;
-      case 'modified':
+      case "modified":
         return <Edit2 className="w-5 h-5 text-blue-600" />;
       default:
         return null;
@@ -33,38 +33,42 @@ const DiffItem = ({ diff }: { diff: EnvironmentDiff }) => {
 
   const getChangeTypeBg = (changeType: string) => {
     switch (changeType) {
-      case 'added':
-        return 'border-emerald-200 bg-emerald-50 dark:border-emerald-900/50 dark:bg-emerald-950/20';
-      case 'removed':
-        return 'border-rose-200 bg-rose-50 dark:border-rose-900/50 dark:bg-rose-950/20';
-      case 'modified':
-        return 'border-sky-200 bg-sky-50 dark:border-sky-900/50 dark:bg-sky-950/20';
+      case "added":
+        return "border-emerald-200 bg-emerald-50 dark:border-emerald-900/50 dark:bg-emerald-950/20";
+      case "removed":
+        return "border-rose-200 bg-rose-50 dark:border-rose-900/50 dark:bg-rose-950/20";
+      case "modified":
+        return "border-sky-200 bg-sky-50 dark:border-sky-900/50 dark:bg-sky-950/20";
       default:
-        return 'border-gray-200 bg-gray-50 dark:border-zinc-800 dark:bg-zinc-900';
+        return "border-gray-200 bg-gray-50 dark:border-zinc-800 dark:bg-zinc-900";
     }
   };
 
   const getChangeTypeLabel = (changeType: string) => {
     switch (changeType) {
-      case 'added':
-        return 'Added';
-      case 'removed':
-        return 'Removed';
-      case 'modified':
-        return 'Modified';
+      case "added":
+        return "Added";
+      case "removed":
+        return "Removed";
+      case "modified":
+        return "Modified";
       default:
-        return 'Changed';
+        return "Changed";
     }
   };
 
   return (
-    <div className={`overflow-hidden rounded-md border ${getChangeTypeBg(diff.changeType)}`}>
+    <div
+      className={`overflow-hidden rounded-md border ${getChangeTypeBg(diff.changeType)}`}
+    >
       {/* Header */}
       <div className="flex items-center justify-between border-b border-gray-200 bg-gray-100 px-4 py-2 dark:border-zinc-800 dark:bg-zinc-900/70">
         <div className="flex items-center gap-3">
           {getChangeTypeIcon(diff.changeType)}
           <div>
-            <p className="font-mono text-sm font-semibold text-gray-900 dark:text-zinc-100">{diff.key}</p>
+            <p className="font-mono text-sm font-semibold text-gray-900 dark:text-zinc-100">
+              {diff.key}
+            </p>
             {diff.component && (
               <p className="mt-1 text-xs text-gray-600 dark:text-zinc-400">
                 <span className="inline-block rounded-md border border-gray-300 bg-white px-2 py-0.5 dark:border-zinc-700 dark:bg-zinc-900">
@@ -82,20 +86,20 @@ const DiffItem = ({ diff }: { diff: EnvironmentDiff }) => {
       {/* Diff Content */}
       <div className="p-4 space-y-3">
         {/* Staging Value (Old) */}
-        {diff.stagingValue !== null && diff.changeType !== 'added' && (
+        {diff.stagingValue !== null && diff.changeType !== "added" && (
           <div>
             <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-rose-700 dark:text-rose-300">
               <Minus className="w-4 h-4" />
               Staging (Old)
             </p>
             <div className="max-h-32 overflow-y-auto break-all whitespace-pre-wrap rounded-md border border-rose-200 bg-rose-50 p-3 font-mono text-xs text-gray-900 dark:border-rose-900/50 dark:bg-rose-950/20 dark:text-zinc-100">
-              {diff.stagingValue || 'null'}
+              {diff.stagingValue || "null"}
             </div>
           </div>
         )}
 
         {/* Added Value */}
-        {diff.stagingValue === null && diff.changeType === 'added' && (
+        {diff.stagingValue === null && diff.changeType === "added" && (
           <div>
             <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-rose-700 dark:text-rose-300">
               <Minus className="w-4 h-4" />
@@ -108,20 +112,20 @@ const DiffItem = ({ diff }: { diff: EnvironmentDiff }) => {
         )}
 
         {/* Production Value (New) */}
-        {diff.productionValue !== null && diff.changeType !== 'removed' && (
+        {diff.productionValue !== null && diff.changeType !== "removed" && (
           <div>
             <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-emerald-700 dark:text-emerald-300">
               <Plus className="w-4 h-4" />
               Production (New)
             </p>
             <div className="max-h-32 overflow-y-auto break-all whitespace-pre-wrap rounded-md border border-emerald-200 bg-emerald-50 p-3 font-mono text-xs text-gray-900 dark:border-emerald-900/50 dark:bg-emerald-950/20 dark:text-zinc-100">
-              {diff.productionValue || 'null'}
+              {diff.productionValue || "null"}
             </div>
           </div>
         )}
 
         {/* Removed Value */}
-        {diff.productionValue === null && diff.changeType === 'removed' && (
+        {diff.productionValue === null && diff.changeType === "removed" && (
           <div>
             <p className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase text-emerald-700 dark:text-emerald-300">
               <Plus className="w-4 h-4" />
@@ -156,9 +160,10 @@ export const IncidentReportPage = ({ incidentId }: IncidentReportProps) => {
           setIncident(latest);
         }
       } catch (err) {
-        const errorMessage = err instanceof Error ? err.message : 'Failed to load incident report';
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to load incident report";
         setError(errorMessage);
-        toast.error('Failed to load incident', {
+        toast.error("Failed to load incident", {
           description: errorMessage,
         });
       } finally {
@@ -172,7 +177,9 @@ export const IncidentReportPage = ({ incidentId }: IncidentReportProps) => {
   if (loading) {
     return (
       <div className="flex items-center justify-center h-96">
-        <p className="text-gray-500 dark:text-zinc-400">Loading incident report...</p>
+        <p className="text-gray-500 dark:text-zinc-400">
+          Loading incident report...
+        </p>
       </div>
     );
   }
@@ -195,24 +202,24 @@ export const IncidentReportPage = ({ incidentId }: IncidentReportProps) => {
 
   const getSeverityColor = (severity?: string) => {
     switch (severity) {
-      case 'high':
-        return 'border-rose-300 bg-rose-100 text-rose-900 dark:border-rose-700 dark:bg-rose-500/20 dark:text-rose-200';
-      case 'medium':
-        return 'border-amber-300 bg-amber-100 text-amber-900 dark:border-amber-700 dark:bg-amber-500/20 dark:text-amber-200';
-      case 'low':
-        return 'border-sky-300 bg-sky-100 text-sky-900 dark:border-sky-700 dark:bg-sky-500/20 dark:text-sky-200';
+      case "high":
+        return "border-rose-300 bg-rose-100 text-rose-900 dark:border-rose-700 dark:bg-rose-500/20 dark:text-rose-200";
+      case "medium":
+        return "border-amber-300 bg-amber-100 text-amber-900 dark:border-amber-700 dark:bg-amber-500/20 dark:text-amber-200";
+      case "low":
+        return "border-sky-300 bg-sky-100 text-sky-900 dark:border-sky-700 dark:bg-sky-500/20 dark:text-sky-200";
       default:
-        return 'border-gray-300 bg-gray-100 text-gray-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200';
+        return "border-gray-300 bg-gray-100 text-gray-900 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200";
     }
   };
 
   const getSeverityIcon = (severity?: string) => {
     switch (severity) {
-      case 'high':
+      case "high":
         return <AlertTriangle className="w-5 h-5 text-red-600" />;
-      case 'medium':
+      case "medium":
         return <AlertTriangle className="w-5 h-5 text-yellow-600" />;
-      case 'low':
+      case "low":
         return <AlertTriangle className="w-5 h-5 text-blue-600" />;
       default:
         return null;
@@ -221,13 +228,13 @@ export const IncidentReportPage = ({ incidentId }: IncidentReportProps) => {
 
   const formatDate = (isoString: string) => {
     const date = new Date(isoString);
-    return date.toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
+    return date.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+      second: "2-digit",
     });
   };
 

@@ -1,21 +1,21 @@
-import { useEffect, useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { toast } from 'sonner';
 import {
-  CheckCircle2,
-  AlertTriangle,
   AlertCircle,
-  TrendingUp,
+  AlertTriangle,
   Calendar,
+  CheckCircle2,
+  Play,
+  TrendingUp,
   Zap,
-} from 'lucide-react';
+} from "lucide-react";
+import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { toast } from "sonner";
 import {
   getDashboardSummary,
   listSnapshots,
   triggerIncident,
 } from "../services/api";
-import type { DashboardIncidentSummary, ParityScore } from '../types';
-import { Play } from "lucide-react";
+import type { DashboardIncidentSummary, ParityScore } from "../types";
 
 export const Dashboard = () => {
   const [parityScore, setParityScore] = useState<ParityScore | null>(null);
@@ -23,7 +23,7 @@ export const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [triggering, setTriggering] = useState(false);
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   const handleTrigger = async () => {
     setTriggering(true);
@@ -35,7 +35,7 @@ export const Dashboard = () => {
 
       if (!staging || !production) {
         toast.error("Cannot trigger analysis", {
-          description: "Both staging and production snapshots are required."
+          description: "Both staging and production snapshots are required.",
         });
         return;
       }
@@ -46,10 +46,9 @@ export const Dashboard = () => {
         description: `Incident ${incident_id} created.`,
       });
       void loadData();
-
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Trigger failed";
-      toast.error("Trigger failed", { description: msg})
+      toast.error("Trigger failed", { description: msg });
     } finally {
       setTriggering(false);
     }
@@ -63,9 +62,10 @@ export const Dashboard = () => {
       setParityScore(summary.parityScore);
       setIncidents(summary.incidents);
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Failed to load dashboard data';
+      const errorMessage =
+        err instanceof Error ? err.message : "Failed to load dashboard data";
       setError(errorMessage);
-      toast.error('Failed to load dashboard', {
+      toast.error("Failed to load dashboard", {
         description: errorMessage,
       });
     } finally {
@@ -79,24 +79,24 @@ export const Dashboard = () => {
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'Healthy':
-        return 'border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-900/70 dark:bg-emerald-950/30 dark:text-emerald-300';
-      case 'Warning':
-        return 'border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-300';
-      case 'Critical':
-        return 'border-rose-300 bg-rose-50 text-rose-900 dark:border-rose-900/70 dark:bg-rose-950/30 dark:text-rose-300';
+      case "Healthy":
+        return "border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-900/70 dark:bg-emerald-950/30 dark:text-emerald-300";
+      case "Warning":
+        return "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-300";
+      case "Critical":
+        return "border-rose-300 bg-rose-50 text-rose-900 dark:border-rose-900/70 dark:bg-rose-950/30 dark:text-rose-300";
       default:
-        return 'border-gray-300 bg-gray-50 text-gray-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100';
+        return "border-gray-300 bg-gray-50 text-gray-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100";
     }
   };
 
   const getStatusIcon = (status: string) => {
     switch (status) {
-      case 'Healthy':
+      case "Healthy":
         return <CheckCircle2 className="w-8 h-8 text-green-600" />;
-      case 'Warning':
+      case "Warning":
         return <AlertCircle className="w-8 h-8 text-yellow-600" />;
-      case 'Critical':
+      case "Critical":
         return <AlertTriangle className="w-8 h-8 text-red-600" />;
       default:
         return null;
@@ -105,24 +105,24 @@ export const Dashboard = () => {
 
   const getSeverityBadgeColor = (severity?: string) => {
     switch (severity) {
-      case 'high':
-        return 'bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-500/20 dark:text-rose-200 dark:border-rose-700';
-      case 'medium':
-        return 'bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-500/20 dark:text-amber-200 dark:border-amber-700';
-      case 'low':
-        return 'bg-sky-100 text-sky-800 border-sky-300 dark:bg-sky-500/20 dark:text-sky-200 dark:border-sky-700';
+      case "high":
+        return "bg-rose-100 text-rose-800 border-rose-300 dark:bg-rose-500/20 dark:text-rose-200 dark:border-rose-700";
+      case "medium":
+        return "bg-amber-100 text-amber-800 border-amber-300 dark:bg-amber-500/20 dark:text-amber-200 dark:border-amber-700";
+      case "low":
+        return "bg-sky-100 text-sky-800 border-sky-300 dark:bg-sky-500/20 dark:text-sky-200 dark:border-sky-700";
       default:
-        return 'bg-gray-100 text-gray-800 border-gray-300 dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700';
+        return "bg-gray-100 text-gray-800 border-gray-300 dark:bg-zinc-800 dark:text-zinc-200 dark:border-zinc-700";
     }
   };
 
   const formatDate = (isoString: string) => {
     const date = new Date(isoString);
-    return date.toLocaleDateString('en-US', {
-      month: 'short',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
+    return date.toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
     });
   };
 
@@ -196,8 +196,38 @@ export const Dashboard = () => {
         </div>
       )}
 
+      {/* Stats Footer */}
+      <div className="grid grid-cols-3 gap-4">
+        <div className="rounded-md border border-gray-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <p className="mb-1 text-xs uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+            Total Incidents
+          </p>
+          <p className="text-2xl font-semibold text-gray-900 dark:text-zinc-100">
+            {incidents.length}
+          </p>
+        </div>
+        <div className="rounded-md border border-gray-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <p className="mb-1 text-xs uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+            Critical
+          </p>
+          <p className="text-2xl font-semibold text-rose-600 dark:text-rose-300">
+            {incidents.filter((i) => i.severity === "high").length}
+          </p>
+        </div>
+        <div className="rounded-md border border-gray-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+          <p className="mb-1 text-xs uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+            Last Updated
+          </p>
+          <p className="text-sm font-mono text-gray-900 dark:text-zinc-100">
+            {incidents.length > 0
+              ? formatDate(incidents[0].timestamp)
+              : "Never"}
+          </p>
+        </div>
+      </div>
+
       {/* Recent Drift Alerts */}
-      <div className="overflow-hidden rounded-md border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+      <div className="overflow-auto rounded-md border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
         <div className="border-b border-gray-200 bg-gray-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900 flex justify-between">
           <div>
             <div className="flex items-center gap-2">
@@ -207,13 +237,14 @@ export const Dashboard = () => {
               </h2>
             </div>
             <p className="mt-1 text-xs text-gray-600 dark:text-zinc-400">
-              Configuration mismatches between staging and production environments
+              Configuration mismatches between staging and production
+              environments
             </p>
           </div>
           <button
             onClick={() => void handleTrigger()}
             disabled={triggering}
-            className="flex items-center gap-1.5 rounded-md bg-violet-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-violet-700 disabled:opacity-50 disabled:cursor-not-allowed dark:bg-violet-700 dark:hover:bg-violet-600"
+            className="flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald disabled:opacity-50 disabled:cursor-not-allowed dark:bg-emerald-900 dark:hover:bg-emerald-800"
           >
             <Play className="h-3 w-3" />
             {triggering ? "Analysing..." : "Run Analysis"}
@@ -221,7 +252,7 @@ export const Dashboard = () => {
         </div>
 
         {/* Table */}
-        <div className="overflow-x-auto">
+        <div className="overflow-auto">
           <table className="min-w-max w-full text-sm">
             <thead className="border-b border-gray-200 bg-gray-50 dark:border-zinc-800 dark:bg-zinc-950/80">
               <tr>
@@ -292,9 +323,6 @@ export const Dashboard = () => {
                         <span className="inline-block rounded-md border border-gray-300 bg-gray-100 px-2 py-0.5 font-mono text-xs font-semibold text-gray-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
                           {incident.diffCount}
                         </span>
-                        {/* <span className="text-xs text-gray-600 dark:text-zinc-400">
-                          {incident.diffCount === 1 ? 'change' : 'changes'}
-                        </span> */}
                       </div>
                     </td>
 
@@ -309,36 +337,6 @@ export const Dashboard = () => {
               )}
             </tbody>
           </table>
-        </div>
-      </div>
-
-      {/* Stats Footer */}
-      <div className="grid grid-cols-3 gap-4">
-        <div className="rounded-md border border-gray-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-          <p className="mb-1 text-xs uppercase tracking-wide text-gray-500 dark:text-zinc-400">
-            Total Incidents
-          </p>
-          <p className="text-2xl font-semibold text-gray-900 dark:text-zinc-100">
-            {incidents.length}
-          </p>
-        </div>
-        <div className="rounded-md border border-gray-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-          <p className="mb-1 text-xs uppercase tracking-wide text-gray-500 dark:text-zinc-400">
-            Critical
-          </p>
-          <p className="text-2xl font-semibold text-rose-600 dark:text-rose-300">
-            {incidents.filter((i) => i.severity === "high").length}
-          </p>
-        </div>
-        <div className="rounded-md border border-gray-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-          <p className="mb-1 text-xs uppercase tracking-wide text-gray-500 dark:text-zinc-400">
-            Last Updated
-          </p>
-          <p className="text-sm font-mono text-gray-900 dark:text-zinc-100">
-            {incidents.length > 0
-              ? formatDate(incidents[0].timestamp)
-              : "Never"}
-          </p>
         </div>
       </div>
     </div>
