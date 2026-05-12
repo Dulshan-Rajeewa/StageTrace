@@ -16,6 +16,7 @@ router = APIRouter()
 class TriggerPayload(BaseModel):
     staging_snapshot_id: str
     production_snapshot_id: str
+    incident_description: str | None = None
 
 
 def _fetch_config(payload_url: str, snapshot_id: str, environment: str) -> dict:

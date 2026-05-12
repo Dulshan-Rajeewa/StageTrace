@@ -1,60 +1,51 @@
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass
-from typing import List
+from pydantic import BaseModel, Field
+from typing import List, Literal
 
-from mistralai.client import Mistral
+from google import genai
+from google.genai import types  
 
-from app.config import MISTRAL_API_KEY
+from app.config import GEMINI_API_KEY
 from diff_engine import Delta
 
-client = Mistral(api_key=MISTRAL_API_KEY)
+client = genai.Client(api_key=GEMINI_API_KEY)
 
 SYSTEM_PROMPT = """
-You are a senior DevOps engineer performing forensic root cause analysis.
-
-You will receive a list of configuration differences between a staging environment and a production environment.
-Each difference has a key, staging value, production value, category, and severity hint.
-
-Your job is to rank which differences most likely caused a production incident and explain why.
-
-Respond ONLY with valid JSON in this exact structure, no preamble, no markdown:
-{
-  "top_cause": "string — the single most likely root cause key",
-  "ranked_causes": ["string", "string"],
-  "summary": "string — plain English explanation in 2-3 sentences",
-  "confidence": "high | medium | low",
-  "suggested_fix": "string — actionable fix"
-}"""
+You are a senior DevOps engineer performing forensic root cause analysis on a production incident.
+Given configuration differences between staging and production, identify which delta most likely caused the observed failure. 
+Use your engineering judgment to consider runtime behaviour, code paths, and system dependencies.
+If an incident description is provided, consider it while making the analysis.
+"""
 
 
-@dataclass
-class ForensicReport:
-    top_cause: str
-    ranked_causes: List[str]
-    summary: str
-    confidence: str
-    suggested_fix: str
+class ForensicReport(BaseModel):
+    top_cause: str = Field(description="The single most likely root cause key identifying the delta.")
+    ranked_causes: List[str] = Field(description="A list of all identified deltas ranked by suspicion level.")
+    summary: str = Field(description="A plain English explanation of the findings in a few sentences.")
+    confidence: Literal["high", "medium", "low"] = Field(description="The assessed certainty of the root cause identification.")
+    suggested_fix: str = Field(description="An actionable engineering recommendation to resolve the incident.")
     
 
-_FALLBACK = ForensicReport(
-    top_cause="unknown",
-    ranked_causes=[],
-    summary="AI ranking failed. Review the diffs manully.",
-    confidence="low",
-    suggested_fix="Compare staging and production configs manually.",
-)
+def _FALLBACK(e):
+    return ForensicReport(
+        top_cause="unknown",
+        ranked_causes=[],
+        summary=f"Analysis failed: {str(e)}",
+        confidence="low",
+        suggested_fix="Compare staging and production configs manually.",
+    )
 
 
-def rank_deltas(deltas: List[Delta]) -> ForensicReport:
+def rank_deltas(deltas: List[Delta], incident_description: str | None = None) -> ForensicReport:
     if not deltas:
         return ForensicReport(
             top_cause="none",
             ranked_causes=[],
             summary="No configuration differences detected.",
             confidence="high",
-            suggested_fix="No action required.",
+            suggested_fix="N/A",
         )
         
     deltas_payload = [
@@ -67,29 +58,24 @@ def rank_deltas(deltas: List[Delta]) -> ForensicReport:
         } for d in deltas
     ]
     
+    config = types.GenerateContentConfig(
+        system_instruction=SYSTEM_PROMPT,
+        response_mime_type="application/json",
+        response_schema=ForensicReport,
+    )
+    
     try:
-        response = client.chat.complete(
-            model="mistral-small-latest",
-            max_tokens=1024,
-            messages=[
-                {"role": "system", "content": SYSTEM_PROMPT},
-                {
-                    "role": "user",
-                    "content": f"Analyse these configuration deltas and identify the root cause:\n\n{json.dumps(deltas_payload, indent=2)}",
-                },
-            ],
+        context = f"Incident description: {incident_description}\n\n" if incident_description else ""
+        user_prompt = f"{context}Analyse these configuration deltas:\n\n{json.dumps(deltas_payload, indent=2)}"
+        
+        response = client.models.generate_content(
+            model="gemini-2.5-flash",
+            contents=user_prompt,
+            config=config
         )
         
-        raw = response.choices[0].message.content.strip() # type: ignore
-        data = json.loads(raw)
-
-        return ForensicReport(
-            top_cause=data["top_cause"],
-            ranked_causes=data["ranked_causes"],
-            summary=data["summary"],
-            confidence=data["confidence"],
-            suggested_fix=data["suggested_fix"],
-        )
+        return ForensicReport.model_validate_json(response.text) # type: ignore
         
-    except Exception:
-        return _FALLBACK       
+    except Exception as e:
+        print(f"Error during analysis: {e}")
+        return _FALLBACK(e)
