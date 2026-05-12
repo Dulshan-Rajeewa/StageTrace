@@ -236,62 +236,136 @@ export const IncidentReportPage = ({ incidentId }: IncidentReportProps) => {
       {/* Header */}
       <div>
         <div className="flex items-center gap-3 mb-2">
-          <h1 className="font-mono text-3xl font-semibold tracking-tight text-gray-900 dark:text-zinc-100">{incident.id}</h1>
+          <h1 className="font-mono text-3xl font-semibold tracking-tight text-gray-900 dark:text-zinc-100">
+            {incident.id}
+          </h1>
           <span
             className={`inline-flex items-center gap-2 rounded-md border px-2.5 py-1 text-xs font-semibold uppercase tracking-wide ${getSeverityColor(
-              incident.severity
+              incident.severity,
             )}`}
           >
             {getSeverityIcon(incident.severity)}
-            {incident.severity && incident.severity.charAt(0).toUpperCase() +
-              incident.severity.slice(1) || 'Unknown'}
+            {(incident.severity &&
+              incident.severity.charAt(0).toUpperCase() +
+                incident.severity.slice(1)) ||
+              "Unknown"}
           </span>
         </div>
         <div className="flex items-center gap-2 text-gray-600 dark:text-zinc-400">
           <Calendar className="w-4 h-4" />
-          <span className="font-mono text-sm">{formatDate(incident.timestamp)}</span>
+          <span className="font-mono text-sm">
+            {formatDate(incident.timestamp)}
+          </span>
         </div>
       </div>
 
       {/* Two Column Layout */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
         {/* Column 1: AI Root Cause Analysis */}
-        <div className="flex flex-col">
-          <div className="flex flex-1 flex-col rounded-md border border-gray-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+        <div className="flex flex-col gap-4">
+          {/* Summary */}
+          <div className="rounded-md border border-gray-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
             <div className="flex items-center gap-2 mb-4">
               <Lightbulb className="h-5 w-5 text-violet-500 dark:text-violet-300" />
               <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-900 dark:text-zinc-200">
                 AI Root Cause Analysis
               </h2>
+              {incident.forensicReport && (
+                <span
+                  className={`ml-auto inline-block rounded-md border px-2 py-0.5 text-xs font-semibold ${
+                    incident.forensicReport.confidence === "high"
+                      ? "border-emerald-300 bg-emerald-50 text-emerald-800 dark:border-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300"
+                      : incident.forensicReport.confidence === "medium"
+                        ? "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-300"
+                        : "border-gray-300 bg-gray-100 text-gray-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-300"
+                  }`}
+                >
+                  {incident.forensicReport.confidence.charAt(0).toUpperCase() +
+                    incident.forensicReport.confidence.slice(1)}{" "}
+                  confidence
+                </span>
+              )}
             </div>
+            <p className="text-sm leading-relaxed text-gray-700 dark:text-zinc-300">
+              {incident.rootCauseExplanation}
+            </p>
+          </div>
 
-            <div className="flex-1 text-sm leading-relaxed text-gray-700 dark:text-zinc-300">
-              <p>{incident.rootCauseExplanation}</p>
-            </div>
-
-            {/* Quick Stats */}
-            <div className="mt-6 grid grid-cols-2 gap-3 border-t border-gray-200 pt-5 dark:border-zinc-800">
-              <div className="rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-zinc-800 dark:bg-zinc-950">
-                <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-zinc-400">Diffs Count</p>
-                <p className="text-2xl font-semibold text-violet-600 dark:text-violet-300">
-                  {incident.diffs.length}
+          {/* Top Cause */}
+          {incident.forensicReport?.top_cause &&
+            incident.forensicReport.top_cause !== "none" && (
+              <div className="rounded-md border border-violet-200 bg-violet-50 p-4 dark:border-violet-900/50 dark:bg-violet-950/20">
+                <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-violet-700 dark:text-violet-400">
+                  Primary Root Cause
+                </p>
+                <p className="font-mono text-sm font-semibold text-gray-900 dark:text-zinc-100">
+                  {incident.forensicReport.top_cause}
                 </p>
               </div>
-              <div className="rounded-md border border-gray-200 bg-gray-50 p-3 dark:border-zinc-800 dark:bg-zinc-950">
-                <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-zinc-400">Change Types</p>
-                <p className="mt-1 text-sm font-mono text-gray-900 dark:text-zinc-100">
-                  {[
-                    incident.diffs.filter((d) => d.changeType === 'added').length > 0 &&
-                      '+',
-                    incident.diffs.filter((d) => d.changeType === 'removed').length >
-                      0 && '−',
-                    incident.diffs.filter((d) => d.changeType === 'modified').length >
-                      0 && '~',
-                  ]
-                    .filter(Boolean)
-                    .join('')}
-                </p>
+            )}
+
+          {/* Ranked Causes */}
+          {incident.forensicReport?.ranked_causes &&
+            incident.forensicReport.ranked_causes.length > 0 && (
+              <div className="rounded-md border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+                <div className="border-b border-gray-200 px-4 py-3 dark:border-zinc-800">
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-zinc-400">
+                    Ranked Causes
+                  </p>
+                </div>
+                <ol className="divide-y divide-gray-100 dark:divide-zinc-800">
+                  {incident.forensicReport.ranked_causes.map((cause, i) => (
+                    <li key={i} className="flex items-start gap-3 px-4 py-3">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gray-100 text-xs font-semibold text-gray-600 dark:bg-zinc-800 dark:text-zinc-400">
+                        {i + 1}
+                      </span>
+                      <p className="text-sm text-gray-700 dark:text-zinc-300">
+                        {cause}
+                      </p>
+                    </li>
+                  ))}
+                </ol>
               </div>
+            )}
+
+          {/* Suggested Fix */}
+          {incident.forensicReport?.suggested_fix && (
+            <div className="rounded-md border border-sky-200 bg-sky-50 p-4 dark:border-sky-900/50 dark:bg-sky-950/20">
+              <p className="mb-1 text-xs font-semibold uppercase tracking-wide text-sky-700 dark:text-sky-400">
+                Suggested Fix
+              </p>
+              <p className="text-sm text-gray-700 dark:text-zinc-300">
+                {incident.forensicReport.suggested_fix}
+              </p>
+            </div>
+          )}
+
+          {/* Quick Stats */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="rounded-md border border-gray-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
+              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                Diffs Count
+              </p>
+              <p className="text-2xl font-semibold text-violet-600 dark:text-violet-300">
+                {incident.diffs.length}
+              </p>
+            </div>
+            <div className="rounded-md border border-gray-200 bg-white p-3 dark:border-zinc-800 dark:bg-zinc-900">
+              <p className="text-xs uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+                Change Types
+              </p>
+              <p className="mt-1 text-sm font-mono text-gray-900 dark:text-zinc-100">
+                {[
+                  incident.diffs.filter((d) => d.changeType === "added")
+                    .length > 0 && "+",
+                  incident.diffs.filter((d) => d.changeType === "removed")
+                    .length > 0 && "−",
+                  incident.diffs.filter((d) => d.changeType === "modified")
+                    .length > 0 && "~",
+                ]
+                  .filter(Boolean)
+                  .join("")}
+              </p>
             </div>
           </div>
         </div>
@@ -318,22 +392,28 @@ export const IncidentReportPage = ({ incidentId }: IncidentReportProps) => {
             <div className="border-t border-gray-200 bg-gray-50 px-4 py-2 text-xs text-gray-600 dark:border-zinc-800 dark:bg-zinc-950/80 dark:text-zinc-400">
               <div className="flex items-center justify-between">
                 <span>
-                  Showing {incident.diffs.length}{' '}
-                  {incident.diffs.length === 1 ? 'change' : 'changes'}
+                  Showing {incident.diffs.length}{" "}
+                  {incident.diffs.length === 1 ? "change" : "changes"}
                 </span>
                 <div className="flex gap-4">
                   <span className="flex items-center gap-1">
                     <Plus className="w-4 h-4 text-green-600" />
-                    {incident.diffs.filter((d) => d.changeType === 'added').length}
+                    {
+                      incident.diffs.filter((d) => d.changeType === "added")
+                        .length
+                    }
                   </span>
                   <span className="flex items-center gap-1">
                     <Minus className="w-4 h-4 text-red-600" />
-                    {incident.diffs.filter((d) => d.changeType === 'removed').length}
+                    {
+                      incident.diffs.filter((d) => d.changeType === "removed")
+                        .length
+                    }
                   </span>
                   <span className="flex items-center gap-1">
                     <Edit2 className="w-4 h-4 text-blue-600" />
                     {
-                      incident.diffs.filter((d) => d.changeType === 'modified')
+                      incident.diffs.filter((d) => d.changeType === "modified")
                         .length
                     }
                   </span>

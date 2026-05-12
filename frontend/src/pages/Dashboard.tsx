@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { toast } from 'sonner';
 import {
   CheckCircle2,
@@ -16,6 +17,7 @@ export const Dashboard = () => {
   const [incidents, setIncidents] = useState<DashboardIncidentSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate()
 
   const loadData = async () => {
     setLoading(true);
@@ -203,7 +205,8 @@ export const Dashboard = () => {
                 incidents.map((incident) => (
                   <tr
                     key={incident.id}
-                    className="transition-colors hover:bg-gray-50 dark:hover:bg-zinc-800/60"
+                    className="cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-zinc-800/60"
+                    onClick={() => navigate(`/incidents/${incident.id}`)}
                   >
                     {/* Incident ID */}
                     <td className="px-4 py-3 font-mono text-sm font-semibold text-gray-900 dark:text-zinc-100">

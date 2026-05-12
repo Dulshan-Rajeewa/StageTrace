@@ -152,6 +152,18 @@ export async function getIncidentReport(incidentId: string): Promise<IncidentRep
     severity: data.severity,
     rootCauseExplanation: data.forensic_report?.summary || data.summary,
     diffs: (data.deltas || []).map(mapDelta),
+    forensicReport: data.forensic_report
+      ? {
+          top_cause: data.forensic_report.top_cause,
+          ranked_causes: data.forensic_report.ranked_causes,
+          summary: data.forensic_report.summary,
+          confidence: data.forensic_report.confidence as
+            | "high"
+            | "medium"
+            | "low",
+          suggested_fix: data.forensic_report.suggested_fix,
+        }
+      : undefined,
   };
 }
 

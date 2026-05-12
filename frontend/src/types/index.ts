@@ -17,6 +17,14 @@ export interface EnvironmentDiff {
   component?: string; // optional: service/component name (e.g., 'auth-service')
 }
 
+export interface ForensicReport {
+  top_cause: string;
+  ranked_causes: string[];
+  summary: string;
+  confidence: "high" | "medium" | "low";
+  suggested_fix: string;
+}
+
 /**
  * IncidentReport represents a detected drift incident with analysis
  */
@@ -25,7 +33,8 @@ export interface IncidentReport {
   timestamp: string; // ISO 8601 format
   diffs: EnvironmentDiff[];
   rootCauseExplanation: string; // AI-generated explanation
-  severity?: 'low' | 'medium' | 'high'; // optional severity level
+  severity?: "low" | "medium" | "high";
+  forensicReport?: ForensicReport;
 }
 
 export interface DashboardIncidentSummary {
