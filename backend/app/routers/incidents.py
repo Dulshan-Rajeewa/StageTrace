@@ -110,8 +110,8 @@ def list_incidents(
     offset: int = Query(0, ge=0)
 ):
     # Get total count
-    count_result = supabase.table("incidents").select("id", count="exact").execute()
-    total_count = count_result.count if count_result.count else 0
+    count_result = supabase.table("incidents").select("id", count="exact").execute()  # type: ignore
+    total_count = count_result.count or 0
     
     # Get paginated results
     result = (
