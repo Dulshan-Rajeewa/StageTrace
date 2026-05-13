@@ -389,10 +389,16 @@ export const IncidentReportPage = ({ incidentId }: IncidentReportProps) => {
             </div>
 
             {/* Diff Items */}
-            <div className="p-4 space-y-4 overflow-y-auto max-h-96">
-              {incident.diffs.map((diff, index) => (
-                <DiffItem key={index} diff={diff} />
-              ))}
+            <div className="p-4 space-y-4 overflow-y-auto max-h-[calc(100vh-280px)]">
+              {incident.diffs.length > 0 ? (
+                incident.diffs.map((diff, index) => (
+                  <DiffItem key={index} diff={diff} />
+                ))
+              ) : (
+                <div className="text-sm leading-relaxed text-gray-700 dark:text-zinc-300">
+                  No diffs available
+                </div>
+              )}
             </div>
 
             {/* Footer Stats */}

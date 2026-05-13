@@ -175,7 +175,7 @@ export const DriftHistory = () => {
       </div>
 
       <div className="flex-1 overflow-hidden rounded-md border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="max-h-[580px] overflow-auto">
+        <div className="max-h-[calc(100vh-260px)] overflow-auto">
           <table className="min-w-full table-fixed text-left text-sm text-gray-700 dark:text-zinc-300">
             <thead className="sticky top-0 z-10 border-b border-gray-200 bg-gray-50 dark:border-zinc-800 dark:bg-zinc-950">
               <tr>

@@ -4,7 +4,6 @@ import {
   Calendar,
   CheckCircle2,
   Play,
-  TrendingUp,
   Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
@@ -93,11 +92,11 @@ export const Dashboard = () => {
   const getStatusIcon = (status: string) => {
     switch (status) {
       case "Healthy":
-        return <CheckCircle2 className="w-8 h-8 text-green-600" />;
+        return <CheckCircle2 className="w-12 h-12 text-green-600" />;
       case "Warning":
-        return <AlertCircle className="w-8 h-8 text-yellow-600" />;
+        return <AlertCircle className="w-12 h-12 text-yellow-600" />;
       case "Critical":
-        return <AlertTriangle className="w-8 h-8 text-red-600" />;
+        return <AlertTriangle className="w-12 h-12 text-red-600" />;
       default:
         return null;
     }
@@ -156,7 +155,6 @@ export const Dashboard = () => {
         </div>
       )}
 
-      {/* Parity Score Card */}
       {parityScore && (
         <div
           className={`rounded-md border p-6 ${getStatusColor(parityScore.status)}`}
@@ -168,7 +166,7 @@ export const Dashboard = () => {
               </p>
               <div className="flex items-baseline gap-2">
                 <span className="text-5xl font-bold">{parityScore.score}</span>
-                <span className="text-2xl opacity-75">/100</span>
+                <span className="text-2xl opacity-75">/ 100</span>
               </div>
               <p className="text-sm mt-3 opacity-75">
                 Status: {parityScore.status}
@@ -176,21 +174,13 @@ export const Dashboard = () => {
             </div>
             <div className="flex flex-col items-center gap-2">
               {getStatusIcon(parityScore.status)}
-              <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-current/40 bg-white/40 dark:bg-zinc-900/50">
+              {/* <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-current/40 bg-white/40 dark:bg-zinc-900/50">
                 <div className="text-center">
                   <div className="text-lg font-semibold opacity-90">
                     {parityScore.score}%
                   </div>
                 </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Trend info */}
-          <div className="mt-6 pt-6 border-t border-current border-opacity-20">
-            <div className="flex items-center gap-2 text-sm">
-              <TrendingUp className="w-4 h-4" />
-              <span>Last 4 readings: 92% → 88% → 78% → 78%</span>
+              </div> */}
             </div>
           </div>
         </div>

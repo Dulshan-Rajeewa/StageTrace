@@ -2,8 +2,8 @@
  * ParityScore represents the configuration parity between staging and production
  */
 export interface ParityScore {
-  score: number; // 0-100
-  status: 'Healthy' | 'Warning' | 'Critical';
+  score: number;
+  status: "Healthy" | "Warning" | "Critical";
 }
 
 /**
@@ -13,7 +13,7 @@ export interface EnvironmentDiff {
   key: string; // e.g., 'API_KEY', 'DATABASE_URL'
   stagingValue: string | null;
   productionValue: string | null;
-  changeType: 'added' | 'removed' | 'modified';
+  changeType: "added" | "removed" | "modified";
   component?: string; // optional: service/component name (e.g., 'auth-service')
 }
 
@@ -40,7 +40,7 @@ export interface IncidentReport {
 export interface DashboardIncidentSummary {
   id: string;
   timestamp: string;
-  severity: 'low' | 'medium' | 'high';
+  severity: "low" | "medium" | "high";
   summary: string;
   diffCount: number;
 }
@@ -57,5 +57,5 @@ export interface DriftHistoryRow {
   configKey: string;
   stagingValue: string;
   productionValue: string;
-  changeType: 'Modified' | 'Added' | 'Missing';
+  changeType: "Modified" | "Added" | "Missing";
 }
