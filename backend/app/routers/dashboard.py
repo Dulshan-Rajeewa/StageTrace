@@ -17,6 +17,20 @@ def _parity_status(score: int) -> str:
 
 @router.get("/summary")
 def get_dashboard_summary() -> dict[str, Any]:
+    # Get latest incident only for parity score
+    latest = (
+        supabase.table("incidents")
+        .select("deltas")
+        .order("triggered_at", desc=True)
+        .limit(1)
+        .execute()
+    )
+
+    latest_diffs = len((latest.data[0].get("deltas") or []) if latest.data else [])
+    score = max(0, 100 - (latest_diffs * 5))
+    status = _parity_status(score)
+
+    # Get recent incidents for the table
     result = (
         supabase.table("incidents")
         .select("id, triggered_at, severity, summary, deltas")
@@ -26,12 +40,6 @@ def get_dashboard_summary() -> dict[str, Any]:
     )
 
     incidents = result.data or []
-    total_diffs = sum(len(incident.get("deltas") or []) for incident in incidents)
-
-    # Simple parity model: every mismatch reduces parity by 3 points, floor at 0.
-    score = max(0, 100 - (total_diffs * 3))
-    status = _parity_status(score)
-
     recent = [
         {
             "id": incident.get("id"),
@@ -42,7 +50,7 @@ def get_dashboard_summary() -> dict[str, Any]:
         }
         for incident in incidents
     ]
-
+    
     return {
         "parity_score": {
             "score": score,

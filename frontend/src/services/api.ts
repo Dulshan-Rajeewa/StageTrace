@@ -1,11 +1,11 @@
 import type {
   DashboardSummary,
-  DriftHistoryRow,
   EnvironmentDiff,
   IncidentReport,
-} from '../types';
+} from "../types";
 
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:8000';
+const API_BASE_URL =
+  import.meta.env.VITE_API_BASE_URL || "http://localhost:8000";
 
 interface BackendDelta {
   key: string;
@@ -18,7 +18,7 @@ interface BackendDelta {
 interface BackendIncidentListRow {
   id: string;
   timestamp: string;
-  severity: 'low' | 'medium' | 'high';
+  severity: "low" | "medium" | "high";
   status: string;
   summary: string;
   diff_count: number;
@@ -27,7 +27,7 @@ interface BackendIncidentListRow {
 interface BackendIncidentReport {
   id: string;
   timestamp: string;
-  severity: 'low' | 'medium' | 'high';
+  severity: "low" | "medium" | "high";
   status: string;
   summary: string;
   deltas: BackendDelta[];
@@ -43,7 +43,7 @@ interface BackendIncidentReport {
 interface BackendDashboardSummary {
   parity_score: {
     score: number;
-    status: 'Healthy' | 'Warning' | 'Critical';
+    status: "Healthy" | "Warning" | "Critical";
   };
   incidents: BackendIncidentListRow[];
 }
@@ -55,7 +55,7 @@ interface BackendHistoryRow {
   config_key: string;
   staging_value: string | null;
   production_value: string | null;
-  change_type: 'Modified' | 'Added' | 'Missing';
+  change_type: "Modified" | "Added" | "Missing";
 }
 
 interface PaginationMeta {
@@ -78,16 +78,27 @@ interface HistoryResponse<T> extends PaginatedResponse<T> {
   };
 }
 
-const mapChangeType = (delta: BackendDelta): EnvironmentDiff['changeType'] => {
+interface BackendSnapshot {
+  id: string;
+  environment: "staging" | "production";
+  timestamp: string;
+  version_tag: string | null;
+}
+
+export async function listSnapshots(): Promise<BackendSnapshot[]> {
+  return fetchJson<BackendSnapshot[]>("/snapshots/");
+}
+
+const mapChangeType = (delta: BackendDelta): EnvironmentDiff["changeType"] => {
   if (delta.staging_value === null) {
-    return 'added';
+    return "added";
   }
 
   if (delta.production_value === null) {
-    return 'removed';
+    return "removed";
   }
 
-  return 'modified';
+  return "modified";
 };
 
 const mapDelta = (delta: BackendDelta): EnvironmentDiff => ({
@@ -109,7 +120,7 @@ async function fetchJson<T>(path: string): Promise<T> {
 }
 
 export async function getDashboardSummary(): Promise<DashboardSummary> {
-  const data = await fetchJson<BackendDashboardSummary>('/dashboard/summary');
+  const data = await fetchJson<BackendDashboardSummary>("/dashboard/summary");
 
   return {
     parityScore: {
@@ -126,9 +137,12 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
   };
 }
 
-export async function listIncidentSummaries(limit: number = 50, offset: number = 0) {
+export async function listIncidentSummaries(
+  limit: number = 50,
+  offset: number = 0,
+) {
   const data = await fetchJson<PaginatedResponse<BackendIncidentListRow>>(
-    `/incidents/?limit=${limit}&offset=${offset}`
+    `/incidents/?limit=${limit}&offset=${offset}`,
   );
 
   return {
@@ -143,8 +157,12 @@ export async function listIncidentSummaries(limit: number = 50, offset: number =
   };
 }
 
-export async function getIncidentReport(incidentId: string): Promise<IncidentReport> {
-  const data = await fetchJson<BackendIncidentReport>(`/incidents/${incidentId}/report`);
+export async function getIncidentReport(
+  incidentId: string,
+): Promise<IncidentReport> {
+  const data = await fetchJson<BackendIncidentReport>(
+    `/incidents/${incidentId}/report`,
+  );
 
   return {
     id: data.id,
@@ -152,6 +170,18 @@ export async function getIncidentReport(incidentId: string): Promise<IncidentRep
     severity: data.severity,
     rootCauseExplanation: data.forensic_report?.summary || data.summary,
     diffs: (data.deltas || []).map(mapDelta),
+    forensicReport: data.forensic_report
+      ? {
+          top_cause: data.forensic_report.top_cause,
+          ranked_causes: data.forensic_report.ranked_causes,
+          summary: data.forensic_report.summary,
+          confidence: data.forensic_report.confidence as
+            | "high"
+            | "medium"
+            | "low",
+          suggested_fix: data.forensic_report.suggested_fix,
+        }
+      : undefined,
   };
 }
 
@@ -167,8 +197,8 @@ export async function getLatestIncidentReport(): Promise<IncidentReport | null> 
 export async function getDriftHistory(
   limit: number = 50,
   offset: number = 0,
-  timeRange: string = 'all',
-  search: string = ''
+  timeRange: string = "all",
+  search: string = "",
 ) {
   const params = new URLSearchParams({
     limit: limit.toString(),
@@ -178,7 +208,7 @@ export async function getDriftHistory(
   });
 
   const data = await fetchJson<HistoryResponse<BackendHistoryRow>>(
-    `/incidents/history?${params.toString()}`
+    `/incidents/history?${params.toString()}`,
   );
 
   return {
@@ -187,11 +217,32 @@ export async function getDriftHistory(
       timestamp: row.timestamp,
       environmentPair: row.environment_pair,
       configKey: row.config_key,
-      stagingValue: row.staging_value ?? '(missing)',
-      productionValue: row.production_value ?? '(missing)',
+      stagingValue: row.staging_value ?? "(missing)",
+      productionValue: row.production_value ?? "(missing)",
       changeType: row.change_type,
     })),
     pagination: data.pagination,
     filters: data.filters,
   };
+}
+
+export async function triggerIncident(
+  stagingSnapshotId: string,
+  productionSnapshotId: string,
+): Promise<{ incident_id: string; severity: string }> {
+  const response = await fetch(`${API_BASE_URL}/incidents/trigger`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      staging_snapshot_id: stagingSnapshotId,
+      production_snapshot_id: productionSnapshotId,
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Trigger failed (${response.status}): ${body}`);
+  }
+
+  return response.json();
 }
