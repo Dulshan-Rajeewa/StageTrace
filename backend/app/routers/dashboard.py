@@ -3,6 +3,7 @@ from typing import Any
 from fastapi import APIRouter
 
 from app.database import supabase
+from app.cache import cache
 
 router = APIRouter()
 
@@ -17,6 +18,12 @@ def _parity_status(score: int) -> str:
 
 @router.get("/summary")
 def get_dashboard_summary() -> dict[str, Any]:
+    # Check cache
+    cache_key = f"dashboard:summary"
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+    
     # Get latest incident only for parity score
     latest = (
         supabase.table("incidents")
@@ -51,10 +58,13 @@ def get_dashboard_summary() -> dict[str, Any]:
         for incident in incidents
     ]
     
-    return {
+    response = {
         "parity_score": {
             "score": score,
             "status": status,
         },
         "incidents": recent,
     }
+    
+    cache.set(cache_key, response)
+    return response
