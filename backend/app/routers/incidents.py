@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 from app.database import supabase
 from app.config import SUPABASE_BUCKET
+from app.cache import cache
 from diff_engine import compute_diff
 from ranker import rank_deltas
 
@@ -95,6 +96,10 @@ def trigger_incident(payload: TriggerPayload):
         "deltas": serialized_deltas,
         "forensic_report": forensic_report,
     }).execute()
+    
+    # Invalidate all caches that depend on incidents
+    cache.invalidate_pattern("incident:")
+    cache.invalidate_pattern("dashboard:")
 
     return {
         "incident_id": incident_id,
@@ -109,6 +114,12 @@ def list_incidents(
     limit: int = Query(50, ge=1, le=100),
     offset: int = Query(0, ge=0)
 ):
+    # Simple cache key for list (ignores offset/limit for simplicity)
+    cache_key = "incident:list"
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+    
     # Get total count
     count_result = supabase.table("incidents").select("id", count="exact").execute()  # type: ignore
     total_count = count_result.count or 0
@@ -135,7 +146,7 @@ def list_incidents(
         for row in rows
     ]
     
-    return {
+    response = {
         "data": incidents,
         "pagination": {
             "total": total_count,
@@ -144,6 +155,9 @@ def list_incidents(
             "has_more": (offset + limit) < total_count,
         }
     }
+    
+    cache.set(cache_key, response)
+    return response
 
 
 @router.get("/history")
@@ -154,6 +168,13 @@ def get_drift_history(
     time_range: str = Query("all", pattern="^(last_7_days|last_30_days|last_90_days|all)$", description="Time range filter"),
     search: str = Query("", description="Config key search filter")
 ):
+
+    # Cache key includes filters
+    cache_key = f"incident:history:{time_range}:{environment_pair}:{search}"
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+    
     # Build time filter
     now = datetime.now(timezone.utc)
     time_cutoff = None
@@ -211,7 +232,7 @@ def get_drift_history(
                 }
             )
 
-    return {
+    response = {
         "data": history,
         "pagination": {
             "total": total_filtered,
@@ -225,10 +246,20 @@ def get_drift_history(
             "search": search,
         }
     }
+    
+    cache.set(cache_key, response)
+    return response
+    
 
 
 @router.get("/{incident_id}/report")
 def get_incident_report(incident_id: str):
+    # Check cache
+    cache_key = f"incident:{incident_id}:report"
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+    
     result = (
         supabase.table("incidents")
         .select("*")
@@ -240,7 +271,7 @@ def get_incident_report(incident_id: str):
         raise HTTPException(status_code=404, detail="Incident not found")
 
     row = result.data
-    return {
+    response = {
         "id": row.get("id"),
         "timestamp": row.get("triggered_at"),
         "severity": row.get("severity") or "low",
@@ -257,3 +288,6 @@ def get_incident_report(incident_id: str):
         "staging_snapshot_id": row.get("staging_snapshot_id"),
         "production_snapshot_id": row.get("production_snapshot_id"),
     }
+    
+    cache.set(cache_key, response)
+    return response

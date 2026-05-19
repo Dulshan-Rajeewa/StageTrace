@@ -7,6 +7,7 @@ from pydantic import BaseModel
 
 from app.database import supabase
 from app.config import SUPABASE_BUCKET
+from app.cache import cache
 
 router = APIRouter()
 
@@ -53,5 +54,14 @@ def create_snapshot(payload: SnapshotPayload):
 
 @router.get("/")
 def list_snapshots():
+    # Check cache
+    cache_key = f"snapshot:list"
+    cached = cache.get(cache_key)
+    if cached:
+        return cached
+    
     result = supabase.table("snapshots").select("*").order("timestamp", desc=True).execute()
-    return result.data
+    response = result.data
+    
+    cache.set(cache_key, response)
+    return response
