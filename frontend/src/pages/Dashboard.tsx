@@ -3,15 +3,21 @@ import {
   AlertTriangle,
   Calendar,
   CheckCircle2,
+  Loader2,
   Play,
   Zap,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
+import { getScenario, getTotalScenarios } from "../lib/scenarios";
 import {
+  getCurrentScenarioIndex,
+  incrementScenarioIndex,
+} from "../lib/scenarioStorage";
+import {
+  createSnapshot,
   getDashboardSummary,
-  listSnapshots,
   triggerIncident,
 } from "../services/api";
 import type { DashboardIncidentSummary, ParityScore } from "../types";
@@ -22,28 +28,52 @@ export const Dashboard = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [triggering, setTriggering] = useState(false);
+  const [currentScenarioName, setCurrentScenarioName] = useState<string>("");
   const navigate = useNavigate();
+
+  // Initialize scenario name on mount
+  useEffect(() => {
+    const index = getCurrentScenarioIndex();
+    const scenario = getScenario(index);
+    setCurrentScenarioName(scenario.name);
+  }, []);
 
   const handleTrigger = async () => {
     setTriggering(true);
 
     try {
-      const snapshots = await listSnapshots();
-      const staging = snapshots.find((s) => s.environment === "staging");
-      const production = snapshots.find((s) => s.environment === "production");
+      const index = getCurrentScenarioIndex();
+      const scenario = getScenario(index);
 
-      if (!staging || !production) {
-        toast.error("Cannot trigger analysis", {
-          description: "Both staging and production snapshots are required.",
-        });
-        return;
-      }
+      // Create staging snapshot with scenario config
+      const stagingSnapshot = await createSnapshot(
+        "staging",
+        scenario.stagingConfig,
+        `scenario-${scenario.name}-staging`,
+      );
 
-      const { incident_id } = await triggerIncident(staging.id, production.id);
+      // Create production snapshot with scenario config
+      const productionSnapshot = await createSnapshot(
+        "production",
+        scenario.productionConfig,
+        `scenario-${scenario.name}-production`,
+      );
+
+      // Trigger incident analysis
+      const { incident_id } = await triggerIncident(
+        stagingSnapshot.id,
+        productionSnapshot.id,
+      );
 
       toast.success("Incident analysis complete", {
-        description: `Incident ${incident_id} created.`,
+        description: `Scenario: ${scenario.name} - Incident ${incident_id} created.`,
       });
+
+      // Increment to next scenario
+      const nextIndex = incrementScenarioIndex(getTotalScenarios());
+      const nextScenario = getScenario(nextIndex);
+      setCurrentScenarioName(nextScenario.name);
+
       void loadData();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Trigger failed";
@@ -135,6 +165,12 @@ export const Dashboard = () => {
         <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">
           Monitor configuration parity between staging and production
         </p>
+        {currentScenarioName && (
+          <p className="mt-2 text-xs font-mono px-2 py-1 inline-block rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+            Current scenario:{" "}
+            <span className="font-semibold">{currentScenarioName}</span>
+          </p>
+        )}
       </div>
 
       {error && (
@@ -234,10 +270,29 @@ export const Dashboard = () => {
           <button
             onClick={() => void handleTrigger()}
             disabled={triggering}
-            className="flex items-center gap-1.5 rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald disabled:opacity-50 disabled:cursor-not-allowed dark:bg-emerald-900 dark:hover:bg-emerald-800"
+            className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald disabled:opacity-50 disabled:cursor-not-allowed dark:bg-emerald-900 dark:hover:bg-emerald-800"
+            title={
+              currentScenarioName
+                ? `Run: ${currentScenarioName}`
+                : "Run Analysis"
+            }
           >
-            <Play className="h-3 w-3" />
-            {triggering ? "Analysing..." : "Run Analysis"}
+            {triggering ? (
+              <span className="flex items-center gap-2">
+                <Loader2 className="h-3 w-3 animate-spin" />
+                Analysing...
+              </span>
+            ) : currentScenarioName ? (
+              <span className="flex items-center gap-2">
+                <Play className="h-3 w-3" />
+                {`Run (${currentScenarioName})`}
+              </span>
+            ) : (
+              <span className="flex items-center gap-2">
+                <Play className="h-3 w-3" />
+                Run Analysis
+              </span>
+            )}
           </button>
         </div>
 

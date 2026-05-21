@@ -226,6 +226,29 @@ export async function getDriftHistory(
   };
 }
 
+export async function createSnapshot(
+  environment: "staging" | "production",
+  config: Record<string, unknown>,
+  versionTag?: string,
+): Promise<{ id: string; payload_url: string }> {
+  const response = await fetch(`${API_BASE_URL}/snapshots/`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      environment,
+      config,
+      version_tag: versionTag,
+    }),
+  });
+
+  if (!response.ok) {
+    const body = await response.text();
+    throw new Error(`Create snapshot failed (${response.status}): ${body}`);
+  }
+
+  return response.json();
+}
+
 export async function triggerIncident(
   stagingSnapshotId: string,
   productionSnapshotId: string,
