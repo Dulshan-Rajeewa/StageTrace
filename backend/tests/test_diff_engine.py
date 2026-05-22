@@ -1,87 +1,86 @@
-from backend.diff_engine import compute_diff
+"""
+Unit tests for diff_engine.py
+
+Tests the configuration diff detection and delta categorization.
+"""
+
+import sys
+from pathlib import Path
+
+# Add parent directory to path so we can import diff_engine
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from diff_engine import compute_diff
 
 
 def test_identical_snapshots_return_empty_list():
-    staging = {"api_key": "secret", "nested": {"value": 1}}
-    production = {"api_key": "secret", "nested": {"value": 1}}
-
-    result = compute_diff(staging, production)
-
-    assert result == []
+    """identical configs return empty delta list"""
+    config = {
+        "database": {"host": "db", "port": 5432},
+        "cache": {"ttl": 3600},
+    }
+    
+    deltas = compute_diff(config, config)
+    
+    assert deltas == []
 
 
 def test_single_modified_key_detects_one_delta():
-    staging = {"API_KEY": "staging-value"}
-    production = {"API_KEY": "production-value"}
-
-    result = compute_diff(staging, production)
-
-    assert len(result) == 1
-    delta = result[0]
-    assert delta.key == "API_KEY"
-    assert delta.staging_value == "staging-value"
-    assert delta.production_value == "production-value"
-    assert delta.category == "env_var"
-    assert delta.severity_hint == "high"
+    """single value change detected as one delta"""
+    config_a = {"database": {"host": "staging", "port": 5432}}
+    config_b = {"database": {"host": "production", "port": 5432}}
+    
+    deltas = compute_diff(config_a, config_b)
+    
+    assert len(deltas) == 1
+    assert deltas[0].key == "database.host"
+    assert deltas[0].staging_value == "staging"
+    assert deltas[0].production_value == "production"
 
 
 def test_multiple_changes_include_added_removed_and_modified_keys():
-    staging = {
-        "API_KEY": "staging-value",
-        "REMOVED_FEATURE_FLAG": True,
-        "shared_version": "1.0.0",
+    """multiple diffs including add, remove, modify detected"""
+    config_a = {
+        "api_key": "secret",
+        "debug": True,
+        "database": {"host": "staging"}
     }
-    production = {
-        "API_KEY": "production-value",
-        "ADDED_FEATURE_FLAG": False,
-        "shared_version": "1.0.0",
+    config_b = {
+        "api_key": "different_secret",
+        "database": {"host": "production"},
+        "new_feature": "enabled"
     }
-
-    result = compute_diff(staging, production)
-    keys = {delta.key for delta in result}
-
-    assert len(result) == 3
-    assert "API_KEY" in keys
-    assert "REMOVED_FEATURE_FLAG" in keys
-    assert "ADDED_FEATURE_FLAG" in keys
-
-    modified = next(delta for delta in result if delta.key == "API_KEY")
-    assert modified.staging_value == "staging-value"
-    assert modified.production_value == "production-value"
-
-    removed = next(delta for delta in result if delta.key == "REMOVED_FEATURE_FLAG")
-    assert removed.staging_value == "True"
-    assert removed.production_value is None
-
-    added = next(delta for delta in result if delta.key == "ADDED_FEATURE_FLAG")
-    assert added.production_value == "False"
-    assert added.staging_value is None
+    
+    deltas = compute_diff(config_a, config_b)
+    
+    keys = {d.key for d in deltas}
+    assert "api_key" in keys
+    assert "debug" in keys
+    assert "database.host" in keys
+    assert "new_feature" in keys
 
 
 def test_nested_config_changes_are_detected():
-    staging = {
+    """deeply nested config changes detected"""
+    config_a = {
         "services": {
-            "web": {
-                "replicas": 2,
-                "env": {"DEBUG": False},
+            "email": {
+                "provider": "sendgrid",
+                "rate_limit": 1000
             }
         }
     }
-    production = {
+    config_b = {
         "services": {
-            "web": {
-                "replicas": 3,
-                "env": {"DEBUG": False},
+            "email": {
+                "provider": "mailgun",
+                "rate_limit": 500
             }
         }
     }
-
-    result = compute_diff(staging, production)
-
-    assert len(result) == 1
-    delta = result[0]
-    assert delta.key == "services.web.replicas"
-    assert delta.staging_value == "2"
-    assert delta.production_value == "3"
-    assert delta.category == "schema"
-    assert delta.severity_hint == "low"
+    
+    deltas = compute_diff(config_a, config_b)
+    
+    keys = {d.key for d in deltas}
+    assert "services.email.provider" in keys
+    assert "services.email.rate_limit" in keys

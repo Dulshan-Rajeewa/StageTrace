@@ -48,6 +48,7 @@ def create_snapshot(payload: SnapshotPayload):
         "metadata": {"source": "agent"}
     }
     supabase.table("snapshots").insert(record).execute()
+    cache.invalidate_pattern("snapshot:")
 
     return {"id": snapshot_id, "payload_url": payload_url}
 
