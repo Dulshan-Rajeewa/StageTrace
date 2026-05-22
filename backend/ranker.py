@@ -10,7 +10,8 @@ from google.genai import types
 from app.config import GEMINI_API_KEY
 from diff_engine import Delta
 
-client = genai.Client(api_key=GEMINI_API_KEY)
+client = None  # Will be initialized on first use
+
 
 SYSTEM_PROMPT = """
 You are a senior DevOps engineer performing forensic root cause analysis on a production incident.
@@ -39,6 +40,12 @@ def _FALLBACK(e):
 
 
 def rank_deltas(deltas: List[Delta], incident_description: str | None = None) -> ForensicReport:
+    global client
+    
+    # Initialize client on first use
+    if client is None:
+        client = genai.Client(api_key=GEMINI_API_KEY)
+    
     if not deltas:
         return ForensicReport(
             top_cause="none",
