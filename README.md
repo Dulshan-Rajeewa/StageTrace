@@ -1,174 +1,53 @@
-# StageTrace - Complete Setup & Run Guide
+# StageTrace
 
-StageTrace is a DevOps tool for monitoring configuration drift between staging and production environments. This guide walks you through the complete setup.
+StageTrace is a modern DevOps tool designed to monitor, track, and analyze configuration drift between staging and production environments. It automatically captures configuration snapshots, calculates environmental differences (drift), ranks potential root causes using AI, and presents reports in an intuitive, responsive dashboard.
 
-## Prerequisites
+---
 
-- **Node.js** 18+ (for frontend)
-- **Python** 3.13+ (for backend)
-- **Supabase** account with a project created
-- **Gemini API** key (for AI-powered root cause analysis)
+## Introduction
 
-## Architecture Overview
+In modern microservice and cloud architectures, subtle differences in environment variables, feature flags, database settings, or package versions between staging and production can lead to unexpected outages. StageTrace solves this by continuously diffing configuration payloads and providing automated, AI-powered root-cause analysis when incidents are triggered.
 
-```
-Frontend (React)
-    ↓ (http://localhost:5173)
-    ↓
-Backend (FastAPI)
-    ↓ (http://localhost:8000)
-    ↓
-Supabase PostgreSQL + Storage
-```
-
-- **Frontend**: React + TypeScript + Vite + Tailwind CSS (dark mode)
-- **Backend**: FastAPI + Python 3.13 + Supabase client
-- **Database**: PostgreSQL (snapshots & incidents tables)
-- **Storage**: Supabase Storage for config JSON files
-
-## Step 1: Set Up Supabase
-
-### 1.1 Create Project
-1. Go to [supabase.com](https://supabase.com) and log in
-2. Create a new project
-3. Note down your **Project URL** and **ANON Key**
-
-### 1.2 Run Database Migrations
-Execute these SQL migrations in the Supabase SQL Editor:
-
-**Migration 1: Create Tables**
-```sql
--- backend/migrations/001_create_tables.sql
-```
-
-**Migration 2: Add Incident Columns**
-```sql
--- backend/migrations/002_add_incident_payload_columns.sql
-```
-
-### 1.3 Create Storage Bucket
-1. Go to Storage in your Supabase project
-2. Create a new bucket named `snapshots`
-3. Set it to public
-
-## Step 2: Backend Setup
-
-### 2.1 Install Dependencies
-
-```bash
-cd backend
-
-# Install dependencies (with uv)
-uv sync
-```
-
-### 2.2 Configure Environment Variables
-
-Create `backend/.env` file:
-
-```bash
-# Supabase
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your-anon-key
-SUPABASE_BUCKET=snapshots
-
-# Gemini AI
-GEMINI_API_KEY=your-gemini-api-key
-
-# Frontend CORS (allow localhost:5173)
-FRONTEND_ORIGINS=http://localhost:5173,http://localhost:3000
-
-# Environment
-ENVIRONMENT=development
-```
-
-**⚠️ Important:** Add `.env` to `.gitignore`
-
-### 2.3 Run Backend Server
-
-```bash
-cd backend
-uvicorn app.main:app --reload --port 8000
-```
-
-Expected output:
-```
-INFO:     Uvicorn running on http://127.0.0.1:8000
-INFO:     Application startup complete
-```
-
-**Health check:**
-```bash
-curl http://localhost:8000/health
-# Should return: {"status": "ok"}
-```
-
-## Step 3: Frontend Setup
-
-### 3.1 Install Dependencies
-
-```bash
-cd frontend
-npm install
-```
-
-### 3.2 Configure Environment Variables
-
-Create `frontend/.env.local`:
+### System Architecture
 
 ```
-VITE_API_BASE_URL=http://localhost:8000
+                 +-----------------------------------+
+                 |         Frontend (React)          |
+                 |      http://localhost:5173        |
+                 +-----------------+-----------------+
+                                   | (HTTP / REST)
+                                   v
+                 +-----------------+-----------------+
+                 |         Backend (FastAPI)         |
+                 |      http://localhost:8000        |
+                 +--------+-----------------+--------+
+                          |                 |
+         (Metadata & Logs)|                 | (Config JSONs)
+                          v                 v
+                 +--------+--------+      +-+----------------+
+                 |    Supabase     |      | Supabase Storage |
+                 |   PostgreSQL    |      | (snapshots bucket)
+                 +-----------------+      +------------------+
 ```
 
-### 3.3 Run Development Server
+### Key Features
 
-```bash
-cd frontend
-npm run dev
-```
+* **Interactive Frontend (React + TypeScript + Vite + Tailwind CSS)**:
+  * Sleek UI with **Dark Mode by default** (toggleable in Settings).
+  * Real-time metrics dashboard summarizing drift events and open incidents.
+  * In-depth Incident Reports detailing specific configuration changes.
+  * Searchable and filterable Drift History with pagination and time range controls.
+  * Modern, non-blocking toast notifications for system health and API states.
+* **Robust Backend (FastAPI + Python 3.13)**:
+  * High-performance configuration diffing engine.
+  * AI-powered Root Cause Analysis utilizing **Gemini AI** to rank the likelihood of drift causing a particular incident.
+  * Supabase Client integration for PostgreSQL queries and storage interactions.
+  * Paginated, searchable REST API endpoints.
+* **Secure Database & Storage**: Powered by Supabase.
+  * Audited snapshot storage using Supabase Storage.
+  * Relational schema to track snapshot metadata and generated incidents.
 
-Expected output:
-```
-  ➜  Local:   http://localhost:5173
-  ➜  Press q + enter to quit
-```
-
-Open [http://localhost:5173](http://localhost:5173) in your browser.
-
-**Dark mode by default!** Toggle light mode in Settings (top-right corner).
-
-## Step 4: Run End-to-End Test
-
-The test script creates two snapshots with intentional differences and triggers incident analysis:
-
-```bash
-cd backend
-python test_e2e.py
-```
-
-Expected output:
-```
-[2026-05-11 14:23:45] INFO: StageTrace End-to-End Test
-[2026-05-11 14:23:45] OK: ✓ Backend is healthy
-[2026-05-11 14:23:46] OK: ✓ Created staging snapshot: abc-123
-[2026-05-11 14:23:47] OK: ✓ Created production snapshot: xyz-789
-[2026-05-11 14:23:48] OK: ✓ Triggered incident: incident-uuid
-[2026-05-11 14:23:48] INFO: Severity: high
-[2026-05-11 14:23:48] INFO: Diffs found: 3
-[2026-05-11 14:23:48] OK: ✓ End-to-end test completed successfully!
-```
-
-Then refresh your dashboard in the browser (http://localhost:5173) to see the incident!
-
-## Full Stack Overview - What's Running
-
-| Component | URL | Port | Process |
-|-----------|-----|------|---------|
-| Frontend | http://localhost:5173 | 5173 | `npm run dev` |
-| Backend | http://localhost:8000 | 8000 | `uvicorn app.main:app --reload` |
-| Database | Supabase Cloud | N/A | Managed |
-
-## Project Structure
+### Project Structure
 
 ```
 StageTrace/
@@ -180,7 +59,7 @@ StageTrace/
 │   │   ├── types/         # TypeScript models
 │   │   └── App.tsx        # Routes + Toaster
 │   ├── package.json       # Dependencies (react, vite, tailwind, sonner)
-│   └── .env.local         # Local config
+│   └── .env.example       # Frontend environment template
 │
 ├── backend/
 │   ├── app/
@@ -189,234 +68,240 @@ StageTrace/
 │   │   ├── routers/       # API endpoints (incidents, snapshots, dashboard)
 │   │   └── database.py    # Supabase client
 │   ├── migrations/        # Database schema files
-│   ├── test_e2e.py        # Automation script
+│   ├── tests/             # Automated test suites
+│   ├── agent.py           # Snapshot agent script
 │   ├── pyproject.toml     # Dependencies
-│   └── .env               # Secrets (never commit!)
+│   └── .env.example       # Backend environment template
 │
-└── README.md              # Project overview
+├── run-backend.bat        # Batch script to start backend
+├── run-frontend.bat       # Batch script to start frontend
+└── run-test.bat           # Batch script to run E2E tests
 ```
 
-## API Endpoints
+### API Endpoints Reference
 
-### Health & Status
-- `GET /health` - Backend health check
+* **Health & Status**
+  * `GET /health` - Backend health check
+* **Snapshots**
+  * `POST /snapshots/` - Create a snapshot (upload configuration)
+  * `GET /snapshots/?limit=50&offset=0` - List snapshots (paginated)
+* **Incidents**
+  * `POST /incidents/trigger` - Trigger incident analysis between staging and production snapshots
+  * `GET /incidents/?limit=50&offset=0` - List incidents (paginated)
+  * `GET /incidents/{id}/report` - Get incident forensic report details
+  * `GET /incidents/history?limit=50&offset=0&time_range=all&search=` - Get drift history with filters
+* **Dashboard**
+  * `GET /dashboard/summary` - Get dashboard summary metrics
 
-### Snapshots
-- `POST /snapshots/` - Create snapshot (upload config)
-- `GET /snapshots/?limit=50&offset=0` - List snapshots (paginated)
+---
 
-### Incidents
-- `POST /incidents/trigger` - Trigger incident analysis
-- `GET /incidents/?limit=50&offset=0` - List incidents (paginated)
-- `GET /incidents/{id}/report` - Get incident details
-- `GET /incidents/history?limit=50&offset=0&time_range=all&search=` - Get drift history with filters
+## Steps for Testing
 
-### Dashboard
-- `GET /dashboard/summary` - Get dashboard metrics
+StageTrace supports automated test suites as well as end-to-end simulation workflows.
 
-## Features
+### 1. Automated Tests
 
-### Frontend
-- ✅ Dark mode by default (toggle in Settings)
-- ✅ Real-time incident dashboard
-- ✅ Detailed incident drift viewer
-- ✅ Searchable drift history with time range filters
-- ✅ Error handling with toast notifications
-- ✅ Pagination support
-- ✅ Loading states
+Backend tests are powered by `pytest` and cover snapshot uploads, drift calculation, API endpoints, and database interactions.
 
-### Backend
-- ✅ FastAPI with CORS for localhost
-- ✅ Supabase integration (PostgreSQL + Storage)
-- ✅ Configuration diffing engine
-- ✅ AI-powered root cause analysis (Gemini)
-- ✅ Incident persistence with metadata
-- ✅ Pagination and filtering on all list endpoints
+* **Run all tests**:
+  Navigate to the `backend/` directory and run:
+  ```bash
+  .venv\Scripts\pytest
+  ```
+  *(Or `uv run pytest` if using uv)*
 
-### Database
-- ✅ Snapshots table with S3-like storage
-- ✅ Incidents table with forensic reports
-- ✅ Structured delta storage (JSON)
-- ✅ Audit trail of all diffs
+* **Run specific test files**:
+  ```bash
+  # Diff engine tests
+  .venv\Scripts\pytest tests/test_diff_engine.py
+
+  # E2E integration test suite
+  .venv\Scripts\pytest tests/endpoints/test_e2e.py
+  ```
+
+* **Quick E2E Test Command**:
+  You can run the end-to-end integration test suite using the batch script in the repository root:
+  ```bash
+  run-test.bat
+  ```
+
+---
+
+### 2. End-to-End Agent Simulation
+
+To manually test the entire flow and populate the dashboard with realistic drift data, use the **Snapshot Agent**:
+
+1. Ensure both the **Backend** and **Frontend** servers are running.
+2. From the `backend/` directory, execute the agent to upload environment configurations:
+   * **Staging Configuration**:
+     ```bash
+     .venv\Scripts\python agent.py --env staging --env-file fixtures/staging.env --config-file fixtures/staging.config.yaml
+     ```
+   * **Production Configuration**:
+     ```bash
+     .venv\Scripts\python agent.py --env production --env-file fixtures/production.env --config-file fixtures/production.config.yaml
+     ```
+     > [!TIP]
+     > When the second configuration is uploaded, the Agent will automatically detect the counterpart environment, trigger an incident analysis, diff the files, and run Gemini AI to diagnose the drift.
+
+3. **Check the Dashboard**:
+   * Refresh [http://localhost:5173](http://localhost:5173). You will see a new incident appearing under the dashboard feed, complete with drift details and AI analysis.
+
+---
+
+## Steps for Setup (Complete Guide)
+
+This guide will walk you through the complete setup of StageTrace from scratch.
+
+### Prerequisites
+
+Ensure you have the following installed on your system:
+* **Node.js** (v18 or higher)
+* **Python** (v3.13 or higher)
+* A **Supabase** account
+* A **Gemini API** key (for AI-powered root cause analysis)
+
+---
+
+### Step 1: Database & Storage Setup (Supabase)
+
+1. **Create a Supabase Project**:
+   * Sign in to [Supabase](https://supabase.com) and create a new project.
+   * Note down your **Project URL** and the **service_role** API keys.
+
+2. **Run Schema Migrations**:
+   * Navigate to the SQL Editor in the Supabase console.
+   * Run the SQL scripts in the following order:
+     1. `backend/migrations/001_create_tables.sql` (Creates snapshots and incidents tables)
+     2. `backend/migrations/002_add_incident_payload_columns.sql` (Adds forensic report and structured delta storage)
+
+3. **Configure Storage Bucket**:
+   * Under **Storage** in the Supabase Sidebar, create a new bucket named `snapshots`.
+   * Configure this bucket to be **Public**.
+
+---
+
+### Step 2: Backend Configuration & Start
+
+1. **Navigate to the Backend Directory**:
+   ```bash
+   cd backend
+   ```
+
+2. **Set Environment Variables**:
+   * Copy the template file `.env.example` to `.env`:
+     ```bash
+     copy .env.example .env
+     ```
+   * Populate the `.env` file with your credentials:
+     ```ini
+     SUPABASE_URL="https://your-project.supabase.co"
+     SUPABASE_KEY="your-supabase-service-role-key"
+     GEMINI_API_KEY="your-gemini-api-key"
+     SUPABASE_BUCKET="snapshots"
+     STAGETRACE_API_URL="http://localhost:8000"
+     FRONTEND_ORIGINS="http://localhost:5173"
+     ```
+     > [!IMPORTANT]
+     > Never commit your `.env` file to version control. It is already added to `.gitignore`.
+
+3. **Install Dependencies**:
+   * If you use [uv](https://github.com/astral-sh/uv), sync the environment:
+     ```bash
+     uv sync
+     ```
+   * Alternatively, create a virtual environment and install dependencies manually:
+     ```bash
+     python -m venv .venv
+     .venv\Scripts\activate
+     pip install -r pyproject.toml
+     ```
+
+4. **Start the Server**:
+   * Run via the batch script at the root:
+     ```bash
+     run-backend.bat
+     ```
+   * Or run directly:
+     ```bash
+     uv run uvicorn app.main:app --reload --port 8000
+     ```
+     *(Or `.venv\Scripts\python -m uvicorn app.main:app --reload --port 8000`)*
+
+5. **Verify Backend Status**:
+   * Send a health check request:
+     ```bash
+     curl http://localhost:8000/health
+     # Expected response: {"status":"ok"}
+     ```
+
+---
+
+### Step 3: Frontend Configuration & Start
+
+1. **Navigate to the Frontend Directory**:
+   ```bash
+   cd frontend
+   ```
+
+2. **Set Environment Variables**:
+   * Copy the template file `.env.example` to `.env`:
+     ```bash
+     copy .env.example .env
+     ```
+   * Make sure it contains:
+     ```ini
+     VITE_API_BASE_URL=http://localhost:8000
+     ```
+
+3. **Install Dependencies**:
+   ```bash
+   npm install
+   ```
+
+4. **Start the Development Server**:
+   * Run via the batch script at the root:
+     ```bash
+     run-frontend.bat
+     ```
+   * Or run directly:
+     ```bash
+     npm run dev
+     ```
+
+5. **Access the App**:
+   * Open [http://localhost:5173](http://localhost:5173) in your browser.
+
+---
+
+### Service Ports Summary
+
+| Component | URL | Port | Launch Command |
+| :--- | :--- | :--- | :--- |
+| **Frontend** | `http://localhost:5173` | `5173` | `npm run dev` |
+| **Backend** | `http://localhost:8000` | `8000` | `uvicorn app.main:app --reload` |
+| **Database & Storage** | Supabase Cloud | *Managed* | N/A |
+
+---
 
 ## Troubleshooting
 
-### "Failed to load dashboard data"
-**Problem:** Frontend can't reach backend  
-**Solution:** 
-1. Check backend is running: `curl http://localhost:8000/health`
-2. Check CORS: Backend logs should show `GET /dashboard/summary`
-3. Verify `VITE_API_BASE_URL` in `.env.local`
+### "Failed to load dashboard data" / Connection Refused
+* **Problem**: Frontend cannot communicate with the API.
+* **Solutions**:
+  1. Verify backend is running on port `8000` (`curl http://localhost:8000/health`).
+  2. Confirm CORS configuration in `backend/.env` allows `http://localhost:5173`.
+  3. Ensure `VITE_API_BASE_URL` in `frontend/.env` is correctly set.
 
-### "Backend connection refused"
-**Problem:** Backend isn't running  
-**Solution:** Run `uvicorn app.main:app --reload --port 8000` in backend directory
+### "Supabase connection failed" / Database Errors
+* **Problem**: Backend fails to fetch data or write snapshots.
+* **Solutions**:
+  1. Confirm your `SUPABASE_URL` and `SUPABASE_KEY` are correct in `backend/.env`.
+  2. Ensure the tables and columns have been created by executing both migrations in the Supabase SQL editor.
+  3. Check that the `snapshots` storage bucket exists and is set to **Public**.
 
-### "Supabase connection failed"
-**Problem:** Invalid credentials or network issue  
-**Solution:**
-1. Verify `SUPABASE_URL` and `SUPABASE_KEY` in `.env`
-2. Check Supabase project is running
-3. Verify migrations were applied
-
-### "No incidents showing"
-**Problem:** Test script hasn't been run yet  
-**Solution:** Run `python test_e2e.py` to create sample data
-
-## Development Workflow
-
-1. **Terminal 1 - Backend:**
-   ```bash
-   cd backend
-   source .venv/bin/activate  # or .venv\Scripts\activate
-   uvicorn app.main:app --reload --port 8000
-   ```
-
-2. **Terminal 2 - Frontend:**
-   ```bash
-   cd frontend
-   npm run dev
-   ```
-
-3. **Terminal 3 - Test (when needed):**
-   ```bash
-   cd backend
-   python test_e2e.py
-   ```
-
-4. **Browser:**
-   Open http://localhost:5173
-
-## Production Deployment
-
-When ready to deploy:
-
-1. **Frontend:** Build with `npm run build`, deploy `dist/` folder
-2. **Backend:** Use production ASGI server (gunicorn, uvicorn with workers)
-3. **Database:** Upgrade Supabase plan for production workloads
-4. **Secrets:** Use environment variables in production, never .env files
-
-## Next Steps
-
-- [ ] Explore the dashboard at http://localhost:5173
-- [ ] Run the test script: `python test_e2e.py`
-- [ ] View incident details and drift analysis
-- [ ] Toggle dark/light mode in Settings
-- [ ] Search and filter drift history
-- [ ] Review forensic reports with AI insights
-
-## Support
-
-For issues or questions:
-1. Check logs: Frontend console (F12) and backend terminal
-2. Verify `.env` files have all required variables
-3. Run health check: `curl http://localhost:8000/health`
-4. Re-run test: `python test_e2e.py`
-
----
-
-## Implementation Notes
-
-## How to Run Everything
-
-### Quick Start (3 Terminals)
-
-**Terminal 1 - Backend:**
-```bash
-cd backend
-uv sync
-uvicorn app.main:app --reload --port 8000
-```
-
-**Terminal 2 - Frontend:**
-```bash
-cd frontend
-npm install
-npm run dev
-```
-
-**Terminal 3 - Test (optional, anytime after backend/frontend running):**
-```bash
-cd backend
-python test_e2e.py
-```
-
-Then open http://localhost:5173 in your browser.
-
----
-
-## API Changes Summary
-
-### Before:
-```
-GET /incidents/ → BackendIncidentListRow[]
-GET /incidents/history → BackendHistoryRow[]
-```
-
-### After:
-```
-GET /incidents/?limit=50&offset=0 → {
-  data: BackendIncidentListRow[],
-  pagination: { total, limit, offset, has_more }
-}
-
-GET /incidents/history?limit=50&offset=0&time_range=all&search= → {
-  data: BackendHistoryRow[],
-  pagination: { total, limit, offset, has_more },
-  filters: { time_range, environment_pair, search }
-}
-```
----
-
-## Testing the Features
-
-### 1. Test Pagination
-```bash
-curl "http://localhost:8000/incidents/?limit=10&offset=0"
-# Response includes pagination metadata
-```
-
-### 2. Test Filters
-```bash
-curl "http://localhost:8000/incidents/history?time_range=last_30_days&search=database"
-# Only shows diffs from last 30 days matching "database"
-```
-
-### 3. Test Error Handling
-- Stop backend server while app is running
-- Refresh dashboard page
-- See toast error with retry button
-- Click retry (won't work until backend is back)
-
-### 4. Test Full Flow
-```bash
-python backend/test_e2e.py
-# Then refresh http://localhost:5173
-# Incident should appear in dashboard!
-```
-
----
-
-## What's Next?
-
-1. **Run the backend:** `uvicorn app.main:app --reload --port 8000`
-2. **Run the frontend:** `npm run dev`
-3. **Run the test:** `python test_e2e.py`
-4. **Open browser:** http://localhost:5173
-5. **See the incident:** Should appear on dashboard!
-6. **Toggle dark/light mode:** Settings (top-right)
-7. **View details:** Click incident to see drift details
-8. **Test filters:** Use time range and search in Drift History
-
----
-
-## Key Improvements
-
-✅ **Better UX**: Users see errors instead of silent failures  
-✅ **Scalable**: Pagination prevents loading massive datasets  
-✅ **Filterable**: Time range & search reduce noise  
-✅ **Recoverable**: Retry buttons let users fix transient errors  
-✅ **Professional**: Toast notifications match modern web standards  
-✅ **Production-Ready**: All error paths handled gracefully
-
----
+### No Incidents Displayed
+* **Problem**: The dashboard is empty.
+* **Solutions**:
+  1. Run the **End-to-End Agent Simulation** commands above to populate the database with test snapshots and generate an incident.
+  2. Run the automated tests (`run-test.bat`) to verify endpoints are operating properly.
