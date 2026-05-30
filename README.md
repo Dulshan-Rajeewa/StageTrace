@@ -158,7 +158,7 @@ Ensure you have the following installed on your system:
 * **Node.js** (v18 or higher)
 * **Python** (v3.13) and **UV package manager**
 * A **Supabase** account
-* A **Gemini API** key (for AI-powered root cause analysis)
+* A **Gemini API** key (for AI-powered root cause analysis). You can get one by visiting [Google AI Studio](https://aistudio.google.com/app/apikey).
 
 ---
 
@@ -285,19 +285,30 @@ Ensure you have the following installed on your system:
 
 ## Troubleshooting
 
-### "Failed to load dashboard data" / Connection Refused
+### "Failed to load dashboard data" on the frontend
 * **Problem**: Frontend cannot communicate with the API.
 * **Solutions**:
-  1. Verify backend is running on port `8000` (`curl http://localhost:8000/health`).
-  2. Confirm CORS configuration in `backend/.env` allows `http://localhost:5173`.
-  3. Ensure `VITE_API_BASE_URL` in `frontend/.env` is correctly set.
+  1. Click the Retry button on the top of the dashboard.
+  2. Verify backend is running on port `8000` (`curl http://localhost:8000/health`).
+  3. Check that `VITE_API_BASE_URL` in `frontend/.env` is correctly pointing to port `8000`.
+  4. Confirm CORS configuration in `backend/.env` allows `http://localhost:5173`.
+
+### Backend connection refused
+* **Problem**: Backend server is not running or accessible.
+* **Solutions**:
+  1. Verify whether the virtual environment is activated.
+  2. Ensure you run `uvicorn app.main:app --reload --port 8000` inside the `backend` directory inside the active Python virtual environment.
 
 ### "Supabase connection failed" / Database Errors
 * **Problem**: Backend fails to fetch data or write snapshots.
 * **Solutions**:
-  1. Confirm your `SUPABASE_URL` and `SUPABASE_KEY` are correct in `backend/.env`.
-  2. Ensure the tables and columns have been created by executing both migrations in the Supabase SQL editor.
-  3. Check that the `snapshots` storage bucket exists and is set to **Public**.
+  1. Verify your `SUPABASE_URL` and `SUPABASE_KEY` are correct in the `backend/.env` file.
+  2. **Note:** `SUPABASE_KEY` should be the **Service Role Key**, not the Anon Key (this reduces the complexity of setting up policies).
+  3. Ensure your database migrations were successfully run in the Supabase SQL editor.
+  4. Check that the `snapshots` storage bucket exists and is set to **Public**.
+
+### Environment variable setup
+* **Solutions**: Ensure the environment variables are saved in a `.env` file of the respective directories (`frontend/.env` and `backend/.env`).
 
 ### No Incidents Displayed
 * **Problem**: The dashboard is empty.
