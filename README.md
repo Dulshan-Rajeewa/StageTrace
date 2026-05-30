@@ -11,23 +11,30 @@ In modern microservice and cloud architectures, subtle differences in environmen
 ### System Architecture
 
 ```
-                 +-----------------------------------+
-                 |         Frontend (React)          |
-                 |      http://localhost:5173        |
-                 +-----------------+-----------------+
-                                   | (HTTP / REST)
-                                   v
-                 +-----------------+-----------------+
-                 |         Backend (FastAPI)         |
-                 |      http://localhost:8000        |
-                 +--------+-----------------+--------+
-                          |                 |
-         (Metadata & Logs)|                 | (Config JSONs)
-                          v                 v
-                 +--------+--------+      +-+----------------+
-                 |    Supabase     |      | Supabase Storage |
-                 |   PostgreSQL    |      | (snapshots bucket)
-                 +-----------------+      +------------------+
+                  +-----------------------------------+
+                  |      Frontend (React + Vite)      |
+                  |       http://localhost:5173       |
+                  +-----------------+-----------------+
+                                    |
+                                    | (HTTP/REST)
+                                    v
+                  +-----------------+-----------------+
+                  |      Backend (FastAPI + Python)   |
+                  |        http://localhost:8000      |
+                  +--------+-----------------+--------+
+                           |                 |
+    (metadata & incidents) |                 | (snapshots bucket & config JSON)
+                           v                 v
+        +------------------+------+      +---+----------------+
+        |   Supabase PostgreSQL   |      |  Supabase Storage  |
+        +-------------------------+      +---+----------------+
+                                             ^
+                                             |
+                                             |
+                              +--------------+--------------+
+                              |   Snapshot Agent (Python)   |
+                              |          agent.py           |
+                              +-----------------------------+
 ```
 
 ### Key Features
