@@ -47,6 +47,8 @@ export interface DashboardIncidentSummary {
 
 export interface DashboardSummary {
   parityScore: ParityScore;
+  totalCount: number;
+  criticalCount: number;
   incidents: DashboardIncidentSummary[];
 }
 

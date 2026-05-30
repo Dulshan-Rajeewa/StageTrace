@@ -25,6 +25,8 @@ import type { DashboardIncidentSummary, ParityScore } from "../types";
 export const Dashboard = () => {
   const [parityScore, setParityScore] = useState<ParityScore | null>(null);
   const [incidents, setIncidents] = useState<DashboardIncidentSummary[]>([]);
+  const [totalCount, setTotalCount] = useState<number>(0);
+  const [criticalCount, setCriticalCount] = useState<number>(0);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [triggering, setTriggering] = useState(false);
@@ -84,6 +86,11 @@ export const Dashboard = () => {
   };
 
   const loadData = async () => {
+    const summary = await getDashboardSummary();
+    setParityScore(summary.parityScore);
+    setIncidents(summary.incidents);
+    setTotalCount(summary.totalCount);
+    setCriticalCount(summary.criticalCount);
     setLoading(true);
     setError(null);
     try {
@@ -229,7 +236,7 @@ export const Dashboard = () => {
             Total Incidents
           </p>
           <p className="text-2xl font-semibold text-gray-900 dark:text-zinc-100">
-            {incidents.length}
+            {totalCount}
           </p>
         </div>
         <div className="rounded-md border border-gray-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
@@ -237,7 +244,7 @@ export const Dashboard = () => {
             Critical
           </p>
           <p className="text-2xl font-semibold text-rose-600 dark:text-rose-300">
-            {incidents.filter((i) => i.severity === "high").length}
+            {criticalCount}
           </p>
         </div>
         <div className="rounded-md border border-gray-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
