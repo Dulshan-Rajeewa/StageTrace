@@ -24,17 +24,28 @@ def get_dashboard_summary() -> dict[str, Any]:
     if cached:
         return cached
     
+    # True totals
+    total_result = supabase.table("incidents").select("id", count="exact").execute()
+    total_count = total_result.count or 0
+    
+    critical_result = supabase.table("incidents").select("id", count="exact").eq("severity", "high").execute()
+    critical_count = critical_result.count or 0
+    
     # Get latest incident only for parity score
     latest = (
         supabase.table("incidents")
-        .select("deltas")
+        .select("deltas, severity")
         .order("triggered_at", desc=True)
         .limit(1)
         .execute()
     )
 
-    latest_diffs = len((latest.data[0].get("deltas") or []) if latest.data else [])
-    score = max(0, 100 - (latest_diffs * 5))
+    latest_incident = latest.data[0] if latest.data else None
+    latest_diffs = len((latest_incident.get("deltas") or []) if latest_incident else [])
+    latest_severity = (latest_incident.get("severity") or "low").lower() if latest_incident else "low"
+
+    severity_penalty = {"high": 20, "medium": 10, "low": 0}.get(latest_severity, 0)
+    score = max(0, 100 - (latest_diffs * 5) - severity_penalty)
     status = _parity_status(score)
 
     # Get recent incidents for the table
@@ -59,10 +70,9 @@ def get_dashboard_summary() -> dict[str, Any]:
     ]
     
     response = {
-        "parity_score": {
-            "score": score,
-            "status": status,
-        },
+        "parity_score": {"score": score, "status": status},
+        "total_count": total_count,
+        "critical_count": critical_count,
         "incidents": recent,
     }
     
