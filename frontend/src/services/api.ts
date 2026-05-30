@@ -45,6 +45,8 @@ interface BackendDashboardSummary {
     score: number;
     status: "Healthy" | "Warning" | "Critical";
   };
+  total_count: number;
+  critical_count: number;
   incidents: BackendIncidentListRow[];
 }
 
@@ -127,6 +129,8 @@ export async function getDashboardSummary(): Promise<DashboardSummary> {
       score: data.parity_score.score,
       status: data.parity_score.status,
     },
+    totalCount: data.total_count,
+    criticalCount: data.critical_count,
     incidents: data.incidents.map((incident) => ({
       id: incident.id,
       timestamp: incident.timestamp,
