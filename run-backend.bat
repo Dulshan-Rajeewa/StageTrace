@@ -17,7 +17,7 @@ exit /b 1
 
 :use_uv
 echo uv found, running 'uv sync'...
-uv sync
+uv sync --python 3.13
 if %ERRORLEVEL% neq 0 (
     echo Error: 'uv sync' failed.
     pause

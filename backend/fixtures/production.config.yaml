@@ -1,11 +1,16 @@
 feature_flags:
-  email_rate_limit_enabled: true
+  email_rate_limit_enabled: false
   new_onboarding_flow: true
 
 services:
   email:
     provider: sendgrid
-    timeout_ms: 3000
+    timeout_ms: 1000
+    max_retries: 3
+  database:
+    host: staging-db.internal
+    port: 5432
+    pool_size: 5
 
 dependencies:
   python: "3.11"
