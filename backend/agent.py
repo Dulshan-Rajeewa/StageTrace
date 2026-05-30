@@ -5,7 +5,10 @@ Reads environment variables and a config.yaml from the local machine,
 packages them as a snapshot, and POSTs to the StageTrace API.
 
 Usage:
-    uv run python agent.py --env staging --env-file fixtures/staging.env --config-file fixtures/staging.config.yaml
+    # Upload staging snapshot only (no auto-trigger)
+    uv run python agent.py --env staging --env-file fixtures/staging.env --config-file fixtures/staging.config.yaml --skip-trigger
+
+    # Upload production snapshot and auto-trigger incident analysis
     uv run python agent.py --env production --env-file fixtures/production.env --config-file fixtures/production.config.yaml
 """
 
@@ -81,6 +84,12 @@ def main():
     parser.add_argument("--env-file", required=True, help="Path to .env file")
     parser.add_argument("--config-file", required=True, help="Path to config.yaml file")
     parser.add_argument("--version-tag", default=None, help="Optional version tag")
+    parser.add_argument(
+        "--skip-trigger",
+        action="store_true",
+        default=False,
+        help="Upload snapshot only; do not auto-trigger incident analysis against existing counterpart snapshot.",
+    )
     args = parser.parse_args()
 
     print(f"[Agent] Loading env vars from {args.env_file}")
@@ -95,6 +104,10 @@ def main():
     snapshot_id = post_snapshot(args.env, args.version_tag, snapshot)
 
     print(f"[Agent] Done. Snapshot ID: {snapshot_id}")
+
+    if args.skip_trigger:
+        print(f"[Agent] --skip-trigger set. Skipping incident analysis. Run the agent for the counterpart environment to trigger analysis.")
+        return
 
     opposite_env = "production" if args.env == "staging" else "staging"
     print(f"[Agent] Checking for existing {opposite_env} snapshot...")

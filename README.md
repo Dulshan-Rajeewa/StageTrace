@@ -34,7 +34,6 @@ In modern microservice and cloud architectures, subtle differences in environmen
 
 * **Interactive Frontend (React + TypeScript + Vite + Tailwind CSS)**:
   * Sleek UI with **Dark Mode by default** (toggleable in Settings).
-  * Real-time metrics dashboard summarizing drift events and open incidents.
   * In-depth Incident Reports detailing specific configuration changes.
   * Searchable and filterable Drift History with pagination and time range controls.
   * Modern, non-blocking toast notifications for system health and API states.
@@ -119,7 +118,7 @@ Backend tests are powered by `pytest` and cover snapshot uploads, drift calculat
   .venv\Scripts\pytest tests/endpoints/test_e2e.py
   ```
 
-* **Quick E2E Test Command**:
+* **Quick Full Test Command**:
   You can run the end-to-end integration test suite using the batch script in the repository root:
   ```bash
   run-test.bat
@@ -135,7 +134,7 @@ To manually test the entire flow and populate the dashboard with realistic drift
 2. From the `backend/` directory, execute the agent to upload environment configurations:
    * **Staging Configuration**:
      ```bash
-     .venv\Scripts\python agent.py --env staging --env-file fixtures/staging.env --config-file fixtures/staging.config.yaml
+     .venv\Scripts\python agent.py --env staging --env-file fixtures/staging.env --config-file fixtures/staging.config.yaml --skip-trigger
      ```
    * **Production Configuration**:
      ```bash
@@ -157,7 +156,7 @@ This guide will walk you through the complete setup of StageTrace from scratch.
 
 Ensure you have the following installed on your system:
 * **Node.js** (v18 or higher)
-* **Python** (v3.13 or higher)
+* **Python** (v3.13) and **UV package manager**
 * A **Supabase** account
 * A **Gemini API** key (for AI-powered root cause analysis)
 
@@ -208,7 +207,7 @@ Ensure you have the following installed on your system:
 3. **Install Dependencies**:
    * If you use [uv](https://github.com/astral-sh/uv), sync the environment:
      ```bash
-     uv sync
+     uv sync --python 3.13
      ```
    * Alternatively, create a virtual environment and install dependencies manually:
      ```bash
