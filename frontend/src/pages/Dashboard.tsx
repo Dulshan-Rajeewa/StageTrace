@@ -1,8 +1,5 @@
 import {
-  AlertCircle,
-  AlertTriangle,
   Calendar,
-  CheckCircle2,
   Loader2,
   Play,
   Zap,
@@ -20,6 +17,8 @@ import {
   getDashboardSummary,
   triggerIncident,
 } from "../services/api";
+import { EnvironmentParityMeter } from "../components/EnvironmentParityMeter";
+import { useCriticalIncident } from "../contexts/CriticalIncidentContext";
 import type { DashboardIncidentSummary, ParityScore } from "../types";
 
 export const Dashboard = () => {
@@ -32,6 +31,7 @@ export const Dashboard = () => {
   const [triggering, setTriggering] = useState(false);
   const [currentScenarioName, setCurrentScenarioName] = useState<string>("");
   const navigate = useNavigate();
+  const { triggerCriticalAlert } = useCriticalIncident();
 
   // Initialize scenario name on mount
   useEffect(() => {
@@ -97,6 +97,18 @@ export const Dashboard = () => {
       const summary = await getDashboardSummary();
       setParityScore(summary.parityScore);
       setIncidents(summary.incidents);
+
+      // Check for critical incidents and trigger modal
+      const criticalIncident = summary.incidents.find(
+        (incident) => incident.severity === "high"
+      );
+      if (criticalIncident) {
+        triggerCriticalAlert({
+          incidentId: criticalIncident.id,
+          serviceName: "Production-API",
+          severity: "high",
+        });
+      }
     } catch (err) {
       const errorMessage =
         err instanceof Error ? err.message : "Failed to load dashboard data";
@@ -112,32 +124,6 @@ export const Dashboard = () => {
   useEffect(() => {
     void loadData();
   }, []);
-
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "Healthy":
-        return "border-emerald-300 bg-emerald-50 text-emerald-900 dark:border-emerald-900/70 dark:bg-emerald-950/30 dark:text-emerald-300";
-      case "Warning":
-        return "border-amber-300 bg-amber-50 text-amber-900 dark:border-amber-900/70 dark:bg-amber-950/30 dark:text-amber-300";
-      case "Critical":
-        return "border-rose-300 bg-rose-50 text-rose-900 dark:border-rose-900/70 dark:bg-rose-950/30 dark:text-rose-300";
-      default:
-        return "border-gray-300 bg-gray-50 text-gray-900 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-100";
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "Healthy":
-        return <CheckCircle2 className="w-12 h-12 text-green-600" />;
-      case "Warning":
-        return <AlertCircle className="w-12 h-12 text-yellow-600" />;
-      case "Critical":
-        return <AlertTriangle className="w-12 h-12 text-red-600" />;
-      default:
-        return null;
-    }
-  };
 
   const getSeverityBadgeColor = (severity?: string) => {
     switch (severity) {
@@ -166,14 +152,14 @@ export const Dashboard = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-zinc-100">
+        <h1 className="text-3xl font-semibold tracking-tight text-white">
           Dashboard
         </h1>
-        <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">
+        <p className="mt-1 text-sm text-cyan-200/60">
           Monitor configuration parity between staging and production
         </p>
         {currentScenarioName && (
-          <p className="mt-2 text-xs font-mono px-2 py-1 inline-block rounded bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300">
+          <p className="mt-2 text-xs font-mono px-2 py-1 inline-block rounded bg-[rgba(0,243,255,0.1)] text-[#00f3ff] border border-[rgba(0,243,255,0.3)]">
             Current scenario:{" "}
             <span className="font-semibold">{currentScenarioName}</span>
           </p>
@@ -181,7 +167,7 @@ export const Dashboard = () => {
       </div>
 
       {error && (
-        <div className="rounded-md border border-rose-300 bg-rose-100 px-4 py-3 text-sm text-rose-800 dark:border-rose-700 dark:bg-rose-500/20 dark:text-rose-200 flex items-center justify-between">
+        <div className="rounded-md border border-rose-600/40 bg-[rgba(239,68,68,0.1)] px-4 py-3 text-sm text-rose-300 flex items-center justify-between">
           <span>{error}</span>
           <button
             onClick={() => void loadData()}
@@ -193,65 +179,38 @@ export const Dashboard = () => {
       )}
 
       {loading && (
-        <div className="rounded-md border border-gray-200 bg-white px-4 py-3 text-sm text-gray-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
+        <div className="rounded-md border border-[rgba(0,243,255,0.2)] bg-[rgba(0,243,255,0.05)] px-4 py-3 text-sm text-cyan-200/70">
           Loading dashboard data...
         </div>
       )}
 
       {parityScore && (
-        <div
-          className={`rounded-md border p-6 ${getStatusColor(parityScore.status)}`}
-        >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium opacity-75 mb-2">
-                Overall Parity Score
-              </p>
-              <div className="flex items-baseline gap-2">
-                <span className="text-5xl font-bold">{parityScore.score}</span>
-                <span className="text-2xl opacity-75">/ 100</span>
-              </div>
-              <p className="text-sm mt-3 opacity-75">
-                Status: {parityScore.status}
-              </p>
-            </div>
-            <div className="flex flex-col items-center gap-2">
-              {getStatusIcon(parityScore.status)}
-              {/* <div className="flex h-24 w-24 items-center justify-center rounded-full border-2 border-current/40 bg-white/40 dark:bg-zinc-900/50">
-                <div className="text-center">
-                  <div className="text-lg font-semibold opacity-90">
-                    {parityScore.score}%
-                  </div>
-                </div>
-              </div> */}
-            </div>
-          </div>
-        </div>
+        <EnvironmentParityMeter score={parityScore.score} status={parityScore.status} />
       )}
 
       {/* Stats Footer */}
       <div className="grid grid-cols-3 gap-4">
-        <div className="rounded-md border border-gray-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-          <p className="mb-1 text-xs uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+        <div className="glass-panel p-4">
+          <p className="mb-1 text-xs uppercase tracking-wide text-cyan-200/60">
             Total Incidents
           </p>
-          <p className="text-2xl font-semibold text-gray-900 dark:text-zinc-100">
+          <p className="text-2xl font-semibold text-white">
             {totalCount}
           </p>
         </div>
-        <div className="rounded-md border border-gray-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-          <p className="mb-1 text-xs uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+        <div className="glass-panel p-4">
+          <p className="mb-1 text-xs uppercase tracking-wide text-cyan-200/60">
             Critical
           </p>
-          <p className="text-2xl font-semibold text-rose-600 dark:text-rose-300">
+          <p className="text-2xl font-semibold text-rose-300">
             {criticalCount}
           </p>
         </div>
-        <div className="rounded-md border border-gray-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
-          <p className="mb-1 text-xs uppercase tracking-wide text-gray-500 dark:text-zinc-400">
+        <div className="glass-panel p-4">
+          <p className="mb-1 text-xs uppercase tracking-wide text-cyan-200/60">
             Last Updated
           </p>
-          <p className="text-sm font-mono text-gray-900 dark:text-zinc-100">
+          <p className="text-sm font-mono text-cyan-200">
             {incidents.length > 0
               ? formatDate(incidents[0].timestamp)
               : "Never"}
@@ -259,17 +218,34 @@ export const Dashboard = () => {
         </div>
       </div>
 
+      {/* Demo Button for Critical Incident Modal */}
+      <div className="flex justify-center">
+        <button
+          onClick={() => {
+            triggerCriticalAlert({
+              incidentId: "INCIDENT-DEMO-001",
+              serviceName: "Production-API",
+              severity: "high",
+              isDemo: true,
+            }, { force: true });
+          }}
+          className="text-xs font-mono px-3 py-1 rounded border border-red-600/40 text-red-400/60 hover:text-red-300 hover:border-red-600 transition-colors"
+        >
+          [Demo] Trigger Critical Incident Modal
+        </button>
+      </div>
+
       {/* Recent Drift Alerts */}
-      <div className="overflow-auto rounded-md border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="border-b border-gray-200 bg-gray-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-900 flex justify-between">
+      <div className="glass-panel overflow-auto !rounded-lg">
+        <div className="border-b border-[rgba(0,243,255,0.1)] px-4 py-3 flex justify-between">
           <div>
             <div className="flex items-center gap-2">
-              <Zap className="h-4 w-4 text-gray-700 dark:text-zinc-300" />
-              <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-900 dark:text-zinc-200">
+              <Zap className="h-4 w-4 text-cyan-300" />
+              <h2 className="text-sm font-semibold uppercase tracking-wide text-white">
                 Recent Drift Alerts
               </h2>
             </div>
-            <p className="mt-1 text-xs text-gray-600 dark:text-zinc-400">
+            <p className="mt-1 text-xs text-cyan-200/60">
               Configuration mismatches between staging and production
               environments
             </p>
@@ -277,7 +253,7 @@ export const Dashboard = () => {
           <button
             onClick={() => void handleTrigger()}
             disabled={triggering}
-            className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-emerald disabled:opacity-50 disabled:cursor-not-allowed dark:bg-emerald-900 dark:hover:bg-emerald-800"
+            className="rounded-md bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-all hover:bg-emerald-500 hover:shadow-[0_0_12px_rgba(16,185,129,0.5)] disabled:opacity-50 disabled:cursor-not-allowed"
             title={
               currentScenarioName
                 ? `Run: ${currentScenarioName}`
@@ -306,31 +282,31 @@ export const Dashboard = () => {
         {/* Table */}
         <div className="overflow-auto">
           <table className="min-w-max w-full text-sm">
-            <thead className="border-b border-gray-200 bg-gray-50 dark:border-zinc-800 dark:bg-zinc-950/80">
+            <thead className="border-b border-[rgba(0,243,255,0.1)] bg-[rgba(0,243,255,0.05)]">
               <tr>
-                <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-zinc-400">
+                <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-cyan-200/70">
                   Incident
                 </th>
-                <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-zinc-400">
+                <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-cyan-200/70">
                   Detected
                 </th>
-                <th className="px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-zinc-400">
+                <th className="px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-cyan-200/70">
                   Severity
                 </th>
-                <th className="px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-zinc-400">
+                <th className="px-4 py-2 text-center text-xs font-semibold uppercase tracking-wide text-cyan-200/70">
                   Changes
                 </th>
-                <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-gray-600 dark:text-zinc-400">
+                <th className="px-4 py-2 text-left text-xs font-semibold uppercase tracking-wide text-cyan-200/70">
                   Root Cause
                 </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-200 dark:divide-zinc-800">
+            <tbody className="divide-y divide-[rgba(0,243,255,0.1)]">
               {!loading && incidents.length === 0 ? (
                 <tr>
                   <td
                     colSpan={5}
-                    className="px-4 py-8 text-center text-gray-500 dark:text-zinc-400"
+                    className="px-4 py-8 text-center text-cyan-200/50"
                   >
                     No incidents detected. Your environments are in sync!
                   </td>
@@ -339,18 +315,18 @@ export const Dashboard = () => {
                 incidents.map((incident) => (
                   <tr
                     key={incident.id}
-                    className="cursor-pointer transition-colors hover:bg-gray-50 dark:hover:bg-zinc-800/60"
+                    className="cursor-pointer transition-colors hover:bg-[rgba(0,243,255,0.05)]"
                     onClick={() => navigate(`/incidents/${incident.id}`)}
                   >
                     {/* Incident ID */}
-                    <td className="px-4 py-3 font-mono text-sm font-semibold text-gray-900 dark:text-zinc-100">
+                    <td className="px-4 py-3 font-mono text-sm font-semibold text-white">
                       {incident.id}
                     </td>
 
                     {/* Detected Date */}
-                    <td className="px-4 py-3 text-gray-600 dark:text-zinc-400">
+                    <td className="px-4 py-3 text-cyan-200/70">
                       <div className="flex items-center gap-2">
-                        <Calendar className="h-4 w-4 text-gray-400 dark:text-zinc-500" />
+                        <Calendar className="h-4 w-4 text-cyan-300/50" />
                         <span className="font-mono text-xs">
                           {formatDate(incident.timestamp)}
                         </span>
@@ -372,14 +348,14 @@ export const Dashboard = () => {
                     {/* Number of Changes */}
                     <td className="px-4 py-3">
                       <div className="flex items-center gap-2 justify-center">
-                        <span className="inline-block rounded-md border border-gray-300 bg-gray-100 px-2 py-0.5 font-mono text-xs font-semibold text-gray-700 dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-200">
+                        <span className="inline-block rounded-md border border-[rgba(0,243,255,0.3)] bg-[rgba(0,243,255,0.05)] px-2 py-0.5 font-mono text-xs font-semibold text-cyan-200">
                           {incident.diffCount}
                         </span>
                       </div>
                     </td>
 
                     {/* Root Cause (truncated) */}
-                    <td className="max-w-xs px-4 py-3 text-gray-600 dark:text-zinc-400">
+                    <td className="max-w-xs px-4 py-3 text-cyan-200/70">
                       <p className="truncate" title={incident.summary}>
                         {incident.summary}
                       </p>
