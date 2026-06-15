@@ -83,54 +83,54 @@ export const Settings = () => {
       {/* Header */}
       <div>
         <div className="flex items-center gap-3 mb-2">
-          <SettingsIcon className="h-7 w-7 text-gray-700 dark:text-zinc-300" />
-          <h1 className="text-3xl font-semibold tracking-tight text-gray-900 dark:text-zinc-100">
+          <SettingsIcon className="h-7 w-7 text-cyan-300" />
+          <h1 className="text-3xl font-semibold tracking-tight text-white">
             Settings
           </h1>
         </div>
-        <p className="text-sm text-gray-600 dark:text-zinc-400">
+        <p className="text-sm text-cyan-200/60">
           Configure your StageTrace environment and integrations
         </p>
       </div>
 
       {/* Success Message */}
       {savedMessage && (
-        <div className="flex items-center gap-3 rounded-md border border-emerald-300 bg-emerald-100 p-3 dark:border-emerald-700 dark:bg-emerald-500/20">
-          <Check className="h-4 w-4 text-emerald-700 dark:text-emerald-300" />
-          <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+        <div className="flex items-center gap-3 rounded-lg border border-emerald-500/50 bg-emerald-500/10 p-3 shadow-[0_0_12px_rgba(16,185,129,0.3)]">
+          <Check className="h-4 w-4 text-emerald-300" />
+          <p className="text-sm font-medium text-emerald-200">
             {savedMessage}
           </p>
         </div>
       )}
 
       {/* Environment Pairs Section */}
-      <div className="overflow-hidden rounded-md border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950/80">
-          <LinkIcon className="h-4 w-4 text-gray-700 dark:text-zinc-300" />
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-900 dark:text-zinc-200">
+      <div className="glass-panel overflow-hidden flex flex-col">
+        <div className="flex items-center gap-2 border-b border-[rgba(0,243,255,0.1)] px-4 py-3">
+          <LinkIcon className="h-4 w-4 text-cyan-300" />
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-white">
             Environment Pairs
           </h2>
         </div>
         <div className="space-y-3 p-5">
-          <p className="text-sm text-gray-600 dark:text-zinc-400">
+          <p className="text-sm text-cyan-200/60">
             StageTrace uses a push-based model. Snapshots are submitted by the
             agent running in each environment — no direct URL access is
             required.
           </p>
           <div className="grid grid-cols-2 gap-3">
-            <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-500">
+            <div className="rounded-lg border border-[rgba(0,243,255,0.2)] bg-[#0b0e14] px-3 py-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-cyan-300/60">
                 Staging
               </p>
-              <p className="mt-1 font-mono text-sm text-gray-900 dark:text-zinc-100">
+              <p className="mt-1 font-mono text-sm text-cyan-300">
                 agent --env staging
               </p>
             </div>
-            <div className="rounded-md border border-gray-200 bg-gray-50 px-3 py-2 dark:border-zinc-800 dark:bg-zinc-950">
-              <p className="text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-zinc-500">
+            <div className="rounded-lg border border-[rgba(0,243,255,0.2)] bg-[#0b0e14] px-3 py-2">
+              <p className="text-xs font-semibold uppercase tracking-wide text-cyan-300/60">
                 Production
               </p>
-              <p className="mt-1 font-mono text-sm text-gray-900 dark:text-zinc-100">
+              <p className="mt-1 font-mono text-sm text-cyan-300">
                 agent --env production
               </p>
             </div>
@@ -139,16 +139,16 @@ export const Settings = () => {
       </div>
 
       {/* Integrations Section */}
-      <div className="overflow-hidden rounded-md border border-gray-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-        <div className="flex items-center gap-2 border-b border-gray-200 bg-gray-50 px-4 py-3 dark:border-zinc-800 dark:bg-zinc-950/80">
-          <Zap className="h-4 w-4 text-gray-700 dark:text-zinc-300" />
-          <h2 className="text-sm font-semibold uppercase tracking-wide text-gray-900 dark:text-zinc-200">
+      <div className="glass-panel overflow-hidden flex flex-col">
+        <div className="flex items-center gap-2 border-b border-[rgba(0,243,255,0.1)] px-4 py-3">
+          <Zap className="h-4 w-4 text-cyan-300" />
+          <h2 className="text-sm font-semibold uppercase tracking-wide text-white">
             Integrations
           </h2>
         </div>
 
         <div className="space-y-6 p-5">
-          <div className="flex items-center gap-2 rounded-md border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-800 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-300">
+          <div className="flex items-center gap-2 rounded-lg border border-amber-500/40 bg-[rgba(255,165,0,0.08)] px-4 py-3 text-sm text-amber-300 shadow-[0_0_12px_rgba(255,165,0,0.2)]">
             <AlertCircle className="h-4 w-4 shrink-0" />
             <span>
               Settings persistence and third-party integrations are not
@@ -157,13 +157,13 @@ export const Settings = () => {
           </div>
 
           {/* PagerDuty Integration */}
-          <div className="rounded-md border border-gray-200 bg-gray-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="rounded-lg border border-[rgba(0,243,255,0.2)] bg-[rgba(0,243,255,0.05)] p-4">
             <div className="flex items-center justify-between mb-4">
               <div className="flex-1">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-900 dark:text-zinc-100">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-white">
                   PagerDuty
                 </h3>
-                <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">
+                <p className="mt-1 text-sm text-cyan-200/60">
                   Send incident alerts to PagerDuty when configuration drift is
                   detected
                 </p>
@@ -172,17 +172,17 @@ export const Settings = () => {
               {/* Toggle Switch */}
               <button
                 onClick={() => handleIntegrationToggle("pagerDuty", "enabled")}
-                className={`relative inline-flex h-7 w-12 items-center rounded-md border transition-colors ${
+                className={`relative inline-flex h-7 w-12 items-center rounded-lg border transition-all ${
                   integrations.pagerDuty.enabled
-                    ? "border-emerald-700 bg-emerald-500/30"
-                    : "border-gray-300 bg-gray-200 dark:border-zinc-700 dark:bg-zinc-800"
+                    ? "border-cyan-500/50 bg-[rgba(0,243,255,0.2)] shadow-[0_0_15px_rgba(0,243,255,0.4)]"
+                    : "border-[rgba(0,243,255,0.2)] bg-[rgba(0,243,255,0.05)]"
                 }`}
               >
                 <span
-                  className={`inline-block h-5 w-5 transform rounded-sm bg-white transition-transform dark:bg-zinc-100 ${
+                  className={`inline-block h-5 w-5 transform rounded-sm bg-white transition-all ${
                     integrations.pagerDuty.enabled
-                      ? "translate-x-6"
-                      : "translate-x-1"
+                      ? "translate-x-6 bg-cyan-300 shadow-[0_0_8px_rgba(0,243,255,0.6)]"
+                      : "translate-x-1 bg-cyan-300/40"
                   }`}
                 />
               </button>
@@ -190,10 +190,10 @@ export const Settings = () => {
 
             {/* Webhook URL Input */}
             {integrations.pagerDuty.enabled && (
-              <div className="mt-4 border-t border-gray-200 pt-4 dark:border-zinc-800">
+              <div className="mt-4 border-t border-[rgba(0,243,255,0.1)] pt-4">
                 <label
                   htmlFor="pagerduty-webhook"
-                  className="mb-2 block text-sm font-medium text-gray-900 dark:text-zinc-200"
+                  className="mb-2 block text-sm font-medium text-white"
                 >
                   Webhook URL
                 </label>
@@ -209,30 +209,30 @@ export const Settings = () => {
                     )
                   }
                   placeholder="https://events.pagerduty.com/v2/enqueue"
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 font-mono text-sm text-gray-900 outline-none transition-colors focus:border-gray-500 focus:ring-2 focus:ring-gray-200 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-zinc-500 dark:focus:ring-zinc-800"
+                  className="glass-input w-full"
                 />
-                <p className="mt-1 text-xs text-gray-500 dark:text-zinc-500">
+                <p className="mt-1 text-xs text-cyan-200/40">
                   Your PagerDuty Events API v2 integration key
                 </p>
               </div>
             )}
 
             {!integrations.pagerDuty.enabled && (
-              <div className="mt-4 flex items-center gap-2 rounded-md border border-gray-200 bg-white p-3 text-sm text-gray-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
-                <AlertCircle className="h-4 w-4 text-gray-400 dark:text-zinc-500" />
+              <div className="mt-4 flex items-center gap-2 rounded-lg border border-[rgba(0,243,255,0.1)] bg-[rgba(0,243,255,0.05)] p-3 text-sm text-cyan-200/50">
+                <AlertCircle className="h-4 w-4 text-cyan-300/40" />
                 <span>PagerDuty integration is disabled</span>
               </div>
             )}
           </div>
 
           {/* GitHub Actions Integration */}
-          <div className="rounded-md border border-gray-200 bg-gray-50 p-4 dark:border-zinc-800 dark:bg-zinc-950">
+          <div className="rounded-lg border border-[rgba(0,243,255,0.2)] bg-[rgba(0,243,255,0.05)] p-4">
             <div className="flex items-center justify-between mb-4">
               <div className="flex-1">
-                <h3 className="text-sm font-semibold uppercase tracking-wide text-gray-900 dark:text-zinc-100">
+                <h3 className="text-sm font-semibold uppercase tracking-wide text-white">
                   GitHub Actions
                 </h3>
-                <p className="mt-1 text-sm text-gray-600 dark:text-zinc-400">
+                <p className="mt-1 text-sm text-cyan-200/60">
                   Trigger GitHub Actions workflows when drift is detected in
                   your repositories
                 </p>
@@ -241,17 +241,17 @@ export const Settings = () => {
               {/* Toggle Switch */}
               <button
                 onClick={() => handleIntegrationToggle("github", "enabled")}
-                className={`relative inline-flex h-7 w-12 items-center rounded-md border transition-colors ${
+                className={`relative inline-flex h-7 w-12 items-center rounded-lg border transition-all ${
                   integrations.github.enabled
-                    ? "border-emerald-700 bg-emerald-500/30"
-                    : "border-gray-300 bg-gray-200 dark:border-zinc-700 dark:bg-zinc-800"
+                    ? "border-cyan-500/50 bg-[rgba(0,243,255,0.2)] shadow-[0_0_15px_rgba(0,243,255,0.4)]"
+                    : "border-[rgba(0,243,255,0.2)] bg-[rgba(0,243,255,0.05)]"
                 }`}
               >
                 <span
-                  className={`inline-block h-5 w-5 transform rounded-sm bg-white transition-transform dark:bg-zinc-100 ${
+                  className={`inline-block h-5 w-5 transform rounded-sm bg-white transition-all ${
                     integrations.github.enabled
-                      ? "translate-x-6"
-                      : "translate-x-1"
+                      ? "translate-x-6 bg-cyan-300 shadow-[0_0_8px_rgba(0,243,255,0.6)]"
+                      : "translate-x-1 bg-cyan-300/40"
                   }`}
                 />
               </button>
@@ -259,10 +259,10 @@ export const Settings = () => {
 
             {/* Token Input */}
             {integrations.github.enabled && (
-              <div className="mt-4 border-t border-gray-200 pt-4 dark:border-zinc-800">
+              <div className="mt-4 border-t border-[rgba(0,243,255,0.1)] pt-4">
                 <label
                   htmlFor="github-token"
-                  className="mb-2 block text-sm font-medium text-gray-900 dark:text-zinc-200"
+                  className="mb-2 block text-sm font-medium text-white"
                 >
                   GitHub Personal Access Token
                 </label>
@@ -274,9 +274,9 @@ export const Settings = () => {
                     handleIntegrationChange("github", e.target.value, "token")
                   }
                   placeholder="ghp_xxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                  className="w-full rounded-md border border-gray-300 bg-white px-3 py-2 font-mono text-sm text-gray-900 outline-none transition-colors focus:border-gray-500 focus:ring-2 focus:ring-gray-200 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100 dark:focus:border-zinc-500 dark:focus:ring-zinc-800"
+                  className="glass-input w-full"
                 />
-                <p className="mt-1 text-xs text-gray-500 dark:text-zinc-500">
+                <p className="mt-1 text-xs text-cyan-200/40">
                   Generate a token at https://github.com/settings/tokens with
                   &quot;workflow&quot; scope
                 </p>
@@ -284,8 +284,8 @@ export const Settings = () => {
             )}
 
             {!integrations.github.enabled && (
-              <div className="mt-4 flex items-center gap-2 rounded-md border border-gray-200 bg-white p-3 text-sm text-gray-600 dark:border-zinc-800 dark:bg-zinc-900 dark:text-zinc-400">
-                <AlertCircle className="h-4 w-4 text-gray-400 dark:text-zinc-500" />
+              <div className="mt-4 flex items-center gap-2 rounded-lg border border-[rgba(0,243,255,0.1)] bg-[rgba(0,243,255,0.05)] p-3 text-sm text-cyan-200/50">
+                <AlertCircle className="h-4 w-4 text-cyan-300/40" />
                 <span>GitHub Actions integration is disabled</span>
               </div>
             )}
@@ -298,7 +298,7 @@ export const Settings = () => {
         <button
           onClick={handleSave}
           disabled={!hasChanges}
-          className="flex items-center gap-2 rounded-md border border-zinc-900 bg-zinc-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-zinc-800 disabled:border-zinc-300 disabled:bg-gray-300 disabled:text-gray-100 disabled:cursor-not-allowed dark:border-zinc-700 dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300 dark:disabled:border-zinc-700 dark:disabled:bg-zinc-800 dark:disabled:text-zinc-500"
+          className="flex items-center gap-2 rounded-lg border border-cyan-500/50 bg-[rgba(0,243,255,0.1)] px-4 py-2 text-sm font-medium text-cyan-300 transition-all hover:bg-[rgba(0,243,255,0.15)] hover:shadow-[0_0_12px_rgba(0,243,255,0.3)] disabled:border-cyan-500/20 disabled:bg-[rgba(0,243,255,0.05)] disabled:text-cyan-300/40 disabled:cursor-not-allowed"
         >
           <Save className="h-4 w-4" />
           Save Changes
@@ -306,7 +306,7 @@ export const Settings = () => {
         <button
           onClick={handleReset}
           disabled={!hasChanges}
-          className="flex items-center gap-2 rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:border-gray-200 disabled:bg-gray-50 disabled:text-gray-400 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800 dark:disabled:border-zinc-800 dark:disabled:bg-zinc-900 dark:disabled:text-zinc-500"
+          className="flex items-center gap-2 rounded-lg border border-[rgba(0,243,255,0.2)] bg-[rgba(0,243,255,0.05)] px-4 py-2 text-sm font-medium text-cyan-200 transition-all hover:bg-[rgba(0,243,255,0.1)] disabled:border-[rgba(0,243,255,0.1)] disabled:bg-[rgba(0,243,255,0.03)] disabled:text-cyan-200/40 disabled:cursor-not-allowed"
         >
           <X className="h-4 w-4" />
           Discard
